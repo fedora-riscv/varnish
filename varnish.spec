@@ -1,7 +1,7 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
 Version: 1.1.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD-like
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -165,8 +165,12 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Tue Sep 06 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-2
+- Removed autogen call (only diff from relase tarball)
+
 * Mon Aug 20 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-1
 - Bumped the version number to 1.1.1.
+
 * Tue Aug 14 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.svn
 - Update for 1.1 branch
 - Added the devel package for the header files and static library files
