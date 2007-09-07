@@ -1,11 +1,12 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
 Version: 1.1.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD-like
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
+Patch0: varnish-cs1913.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: ncurses-devel 
 Requires: kernel >= 2.6.0 varnish-libs = %{version}-%{release}
@@ -47,6 +48,8 @@ Varnish is a high-performance HTTP accelerator
 
 %prep
 %setup -q
+
+%patch0
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
@@ -165,6 +168,10 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Wed Sep 08 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-3
+- Added a patch, changeset 1913 from svn trunk. This makes varnish
+  more stable under specific loads. 
+
 * Tue Sep 06 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-2
 - Removed autogen call (only diff from relase tarball)
 
