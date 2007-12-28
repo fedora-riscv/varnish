@@ -1,14 +1,16 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
-Version: 1.1.1
-Release: 3%{?dist}
+Version: 1.1.2
+Release: 2%{?dist}
 License: BSD-like
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
-Patch0: varnish-cs1913.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: ncurses-devel 
+# The svn sources needs autoconf, automake and libtoolto generate a suitable
+# configure script. Release tarballs would not need this
+# BuildRequires: ncurses-devel automake autoconf libtool libxslt
+BuildRequires: ncurses-devel libxslt
 Requires: kernel >= 2.6.0 varnish-libs = %{version}-%{release}
 Requires: logrotate
 Requires(pre): shadow-utils
@@ -49,11 +51,9 @@ Varnish is a high-performance HTTP accelerator
 %prep
 %setup -q
 
-%patch0
-
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
-#./autogen.sh
+# ./autogen.sh
 
 %build
 
@@ -168,6 +168,14 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Fri Dec 28 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.2-2
+- Added missing changelog items
+- Build for fedora update
+
+* Thu Dec 20 2007 Stig Sandbeck Mathisen <ssm@linpro.no> - 1.1.2-1
+- Bumped the version number to 1.1.2.
+- Addeed build dependency on libxslt
+
 * Wed Sep 08 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-3
 - Added a patch, changeset 1913 from svn trunk. This makes varnish
   more stable under specific loads. 
