@@ -1,7 +1,7 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
 Version: 1.1.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD-like
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -168,9 +168,11 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Fri Dec 28 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.2-3
+- Build for fedora update
+
 * Fri Dec 28 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.2-2
 - Added missing changelog items
-- Build for fedora update
 
 * Thu Dec 20 2007 Stig Sandbeck Mathisen <ssm@linpro.no> - 1.1.2-1
 - Bumped the version number to 1.1.2.
