@@ -1,8 +1,8 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
 Version: 1.1.2
-Release: 4%{?dist}
-License: BSD-like
+Release: 5%{?dist}
+License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
@@ -54,6 +54,9 @@ Varnish is a high-performance HTTP accelerator
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
 # ./autogen.sh
+
+mkdir examples
+cp etc/default.vcl etc/zope-plone.vcl examples
 
 %build
 
@@ -107,7 +110,8 @@ rm -rf %{buildroot}
 %{_var}/log/varnish
 %{_mandir}/man1/*.1*
 %{_mandir}/man7/*.7*
-%doc INSTALL LICENSE README redhat/README.redhat redhat/default.vcl ChangeLog 
+%doc INSTALL LICENSE README redhat/README.redhat ChangeLog 
+%doc examples
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
 %config(noreplace) %{_sysconfdir}/sysconfig/varnish
@@ -168,6 +172,10 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Sat Dec 29 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.2-5
+- Added missing configuration examples
+- Corrected the license to "BSD"
+
 * Fri Dec 28 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.2-4
 - Build for fedora update
 
