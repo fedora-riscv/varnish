@@ -1,7 +1,7 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
 Version: 2.0
-Release: 0.6.beta1%{?dist}
+Release: 0.7.beta1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -11,6 +11,7 @@ Source0: http://downloads.sourceforge.net/varnish/varnish-2.0-beta1.tar.gz
 Patch0: varnish.lockfile.patch
 Patch1: varnish.coresize.patch
 Patch2: varnish.vcl_changes.patch
+Patch3: varnish.cs3157.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -71,6 +72,7 @@ Varnish is a high-performance HTTP accelerator
 %patch0 -p0
 %patch1 -p0
 %patch2 -p0
+%patch3 -p0
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
@@ -208,6 +210,9 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Tue Sep 02 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.7.beta1
+- Added a patch from r3156 and r3157, hiding a legit errno in make check
+
 * Tue Sep 02 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.6.beta1
 - Added a commented option for max coresize in the sysconfig script
 - Added a comment in README.redhat about upgrading from 1.x to 2.0
