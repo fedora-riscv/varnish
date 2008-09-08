@@ -1,7 +1,7 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
 Version: 2.0
-Release: 0.7.beta1%{?dist}
+Release: 0.8.beta1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -12,6 +12,7 @@ Patch0: varnish.lockfile.patch
 Patch1: varnish.coresize.patch
 Patch2: varnish.vcl_changes.patch
 Patch3: varnish.cs3157.patch
+Patch4: varnish.endianfix.cs3170-3071.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -73,10 +74,26 @@ Varnish is a high-performance HTTP accelerator
 %patch1 -p0
 %patch2 -p0
 %patch3 -p0
+%patch4 -p0
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
 # ./autogen.sh
+
+# Hack to get 32- and 64-bits tests run concurrently on the same build machine
+case `uname -m` in
+	ppc64 | s390x | x86_64 | sparc64 )
+		sed -i ' 
+			s,9001,9011,g;
+			s,9080,9090,g; 
+			s,9081,9091,g; 
+			s,9082,9092,g; 
+			s,9180,9190,g;
+		' bin/varnishtest/*.c bin/varnishtest/tests/*vtc
+		;;
+	*)
+		;;
+esac
 
 mkdir examples
 cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
@@ -210,6 +227,11 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Tue Sep 09 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.8.beta1
+- Added a patch from r3171 that fixes an endian bug on ppc and ppc64
+- Added a hack that changes the varnishtest ports for 64bits builds,
+  so they can run in parallell with 32bits build on same build host
+
 * Tue Sep 02 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.7.beta1
 - Added a patch from r3156 and r3157, hiding a legit errno in make check
 
