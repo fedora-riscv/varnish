@@ -1,18 +1,31 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
-Version: 1.0.4
-Release: 2%{?dist}
-License: BSD-like
+Version: 2.0
+Release: 0.8.beta1%{?dist}
+License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
-Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
+#Source0: http://varnish.projects.linpro.no/static/varnish-cache.tar.gz
+#Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
+Source0: http://downloads.sourceforge.net/varnish/varnish-2.0-beta1.tar.gz
+Patch0: varnish.lockfile.patch
+Patch1: varnish.coresize.patch
+Patch2: varnish.vcl_changes.patch
+Patch3: varnish.cs3157.patch
+Patch4: varnish.endianfix.cs3170-3071.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: ncurses-devel 
+# The svn sources needs autoconf, automake and libtool to generate a suitable
+# configure script. Release tarballs would not need this
+#BuildRequires: automake autoconf libtool
+BuildRequires: ncurses-devel libxslt groff
 Requires: kernel >= 2.6.0 varnish-libs = %{version}-%{release}
 Requires: logrotate
+Requires: ncurses
+Requires(pre): shadow-utils
 Requires(post): /sbin/chkconfig
 Requires(preun): /sbin/chkconfig
 Requires(preun): /sbin/service
+Requires(preun): initscripts
 
 # Varnish actually needs gcc installed to work. It uses the C compiler 
 # at runtime to compile the VCL configuration files. This is by design.
@@ -27,40 +40,96 @@ web site: http://www.varnish-cache.org/
 Summary: Libraries for %{name}
 Group: System Environment/Libraries
 BuildRequires: ncurses-devel
-#Requires: ncurses
+#Obsoletes: libvarnish1
 
 %description libs
 Libraries for %{name}.
 Varnish is a high-performance HTTP accelerator.
 
-## Removed the -devel package for now
-#%package devel
-#Summary: Development libraries for %{name}
+%package libs-devel
+Summary: Development files for %{name}-libs
+Group: System Environment/Libraries
+BuildRequires: ncurses-devel
+Requires: kernel >= 2.6.0 varnish-libs = %{version}-%{release}
+
+%description libs-devel
+Development files for %{name}-libs
+Varnish is a high-performance HTTP accelerator
+
+#%package libs-static
+#Summary: Files for static linking of %{name} library functions
 #Group: System Environment/Libraries
 #BuildRequires: ncurses-devel
-#Requires: kernel >= 2.6.0  varnish-libs = %{version}-%{release}
+#Requires: kernel >= 2.6.0 varnish-libs-devel = %{version}-%{release}
 #
-#%description devel
-#Development libraries for %{name}.
+#%description libs-static
+#Files for static linking of varnish library functions
 #Varnish is a high-performance HTTP accelerator
 
 %prep
-%setup -q
+#%setup -q
+%setup -q -n varnish-2.0-beta1
+
+%patch0 -p0
+%patch1 -p0
+%patch2 -p0
+%patch3 -p0
+%patch4 -p0
+
+# The svn sources needs to generate a suitable configure script
+# Release tarballs would not need this
+# ./autogen.sh
+
+# Hack to get 32- and 64-bits tests run concurrently on the same build machine
+case `uname -m` in
+    ppc64 | s390x | x86_64 | sparc64 )
+        sed -i ' 
+            s,9001,9011,g;
+            s,9080,9090,g; 
+            s,9081,9091,g; 
+            s,9082,9092,g; 
+            s,9180,9190,g;
+        ' bin/varnishtest/*.c bin/varnishtest/tests/*vtc
+        ;;
+    *)
+        ;;
+esac
+
+mkdir examples
+cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 
 %build
 
 # Remove "--disable static" if you want to build static libraries 
-# (ie for the devel package)
-%configure --disable-static
+%configure --disable-static --localstatedir=/var/lib
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
-sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
-sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
+sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g;
+        s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
 %{__make} %{?_smp_mflags}
 
-sed -e ' s/8080/80/g ' etc/default.vcl > redhat/default.vcl
+head -6 etc/default.vcl > redhat/default.vcl
+
+cat << EOF >> redhat/default.vcl
+backend default {
+  .host = "127.0.0.1";
+  .port = "80";
+}
+EOF
+
+tail -n +11 etc/default.vcl >> redhat/default.vcl
+
+%if "%dist" == "el4"
+    sed -i 's,--pidfile \$pidfile,,g;
+            s,status -p \$pidfile,status,g;
+            s,killproc -p \$pidfile,killproc,g' \
+    redhat/varnish.initrc redhat/varnishlog.initrc
+%endif
+
+%check
+%{__make} check LD_LIBRARY_PATH="../../lib/libvarnish/.libs:../../lib/libvarnishcompat/.libs:../../lib/libvarnishapi/.libs:../../lib/libvcl/.libs"
 
 %install
 rm -rf %{buildroot}
@@ -69,17 +138,17 @@ make install DESTDIR=%{buildroot} INSTALL="install -p"
 # None of these for fedora
 find %{buildroot}/%{_libdir}/ -name '*.la' -exec rm -f {} ';'
 
-# Remove this line to build the devel package
-find %{buildroot}/%{_libdir}/ -name '*.so' -type l -exec rm -f {} ';'
+# Remove this line to build a devel package with symlinks
+#find %{buildroot}/%{_libdir}/ -name '*.so' -type l -exec rm -f {} ';'
 
 mkdir -p %{buildroot}/var/lib/varnish
 mkdir -p %{buildroot}/var/log/varnish
-
+mkdir -p %{buildroot}/var/run/varnish
 %{__install} -D -m 0644 redhat/default.vcl %{buildroot}%{_sysconfdir}/varnish/default.vcl
 %{__install} -D -m 0644 redhat/varnish.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/varnish
 %{__install} -D -m 0644 redhat/varnish.logrotate %{buildroot}%{_sysconfdir}/logrotate.d/varnish
-%{__install} -D -m 0755 redhat/varnish.initrc %{buildroot}%{_sysconfdir}/init.d/varnish
-%{__install} -D -m 0755 redhat/varnishlog.initrc %{buildroot}%{_sysconfdir}/init.d/varnishlog
+%{__install} -D -m 0755 redhat/varnish.initrc %{buildroot}%{_initrddir}/varnish
+%{__install} -D -m 0755 redhat/varnishlog.initrc %{buildroot}%{_initrddir}/varnishlog
 
 %clean
 rm -rf %{buildroot}
@@ -92,25 +161,48 @@ rm -rf %{buildroot}
 %{_var}/log/varnish
 %{_mandir}/man1/*.1*
 %{_mandir}/man7/*.7*
-%doc INSTALL LICENSE README redhat/README.redhat redhat/default.vcl ChangeLog 
+%doc INSTALL LICENSE README redhat/README.redhat ChangeLog 
+%doc examples
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
 %config(noreplace) %{_sysconfdir}/sysconfig/varnish
 %config(noreplace) %{_sysconfdir}/logrotate.d/varnish
-%{_sysconfdir}/init.d/varnish
-%{_sysconfdir}/init.d/varnishlog
+%{_initrddir}/varnish
+%{_initrddir}/varnishlog
 
 %files libs
 %defattr(-,root,root,-)
 %{_libdir}/*.so.*
 %doc LICENSE
 
-## Removed the -devel package for now
-#%files devel
-#%defattr(-,root,root,-)
-#%{_libdir}/libvarnish.so
-#%{_libdir}/libvarnishapi.so
-#%{_libdir}/libvcl.so
+%files libs-devel
+%defattr(-,root,root,-)
+%{_libdir}/libvarnish.so
+%{_libdir}/libvarnishapi.so
+%{_libdir}/libvarnishcompat.so
+%{_libdir}/libvcl.so
+%dir %{_includedir}/varnish
+%{_includedir}/varnish/shmlog.h
+%{_includedir}/varnish/shmlog_tags.h
+%{_includedir}/varnish/stat_field.h
+%{_includedir}/varnish/stats.h
+%{_includedir}/varnish/varnishapi.h
+%{_libdir}/pkgconfig/varnishapi.pc
+%doc LICENSE
+
+#%files libs-static
+#%{_libdir}/libvarnish.a
+#%{_libdir}/libvarnishapi.a
+#%{_libdir}/libvarnishcompat.a
+#%{_libdir}/libvcl.a
+#%doc LICENSE
+
+%pre
+getent group varnish >/dev/null || groupadd -r varnish
+getent passwd varnish >/dev/null || \
+    useradd -r -g varnish -d /var/lib/varnish -s /sbin/nologin \
+        -c "Varnish http accelerator user" varnish
+exit 0
 
 %post
 /sbin/chkconfig --add varnish
@@ -118,16 +210,16 @@ rm -rf %{buildroot}
 
 %preun
 if [ $1 -lt 1 ]; then
-  /sbin/service varnish stop > /dev/null 2>/dev/null
-  /sbin/service varnishlog stop > /dev/null 2>/dev/null
+  /sbin/service varnish stop > /dev/null 2>&1
+  /sbin/service varnishlog stop > /dev/null 2>&1
   /sbin/chkconfig --del varnish
   /sbin/chkconfig --del varnishlog
 fi
 
 %postun
 if [ $1 -ge 1 ]; then
-  /sbin/service varnish condrestart > /dev/null 2>/dev/null
-  /sbin/service varnishlog condrestart > /dev/null 2>/dev/null
+  /sbin/service varnish condrestart > /dev/null 2>&1
+  /sbin/service varnishlog condrestart > /dev/null 2>&1
 fi
 
 %post libs -p /sbin/ldconfig
@@ -135,9 +227,83 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Tue Sep 09 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.8.beta1
+- Added a patch from r3171 that fixes an endian bug on ppc and ppc64
+- Added a hack that changes the varnishtest ports for 64bits builds,
+  so they can run in parallell with 32bits build on same build host
+
+* Tue Sep 02 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.7.beta1
+- Added a patch from r3156 and r3157, hiding a legit errno in make check
+
+* Tue Sep 02 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.6.beta1
+- Added a commented option for max coresize in the sysconfig script
+- Added a comment in README.redhat about upgrading from 1.x to 2.0
+
+* Fri Aug 29 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.5.beta1
+- Bumped version numbers and source url for first beta release \o/
+- Added a missing directory to the libs-devel package (Michael Schwendt)
+- Added the LICENSE file to the libs-devel package
+- Moved make check to its proper place
+- Removed superfluous definition of lockfile in initscripts
+
+* Wed Aug 27 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.4.20080827svn3136
+- Fixed up init script for varnishlog too
+
+* Mon Aug 25 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.3.20080825svn3125
+- Fixing up init script according to newer Fedora standards
+- The build now runs the test suite after compiling
+- Requires initscripts
+- Change default.vcl from nothing but comments to point to localhost:80,
+
+* Mon Aug 18 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.2.tp2
+- Changed source, version and release to match 2.0-tp2
+
+* Thu Aug 14 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.1.20080814svn
+- default.vcl has moved
+- Added groff to build requirements
+
+* Tue Feb 19 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 1.1.2-6
+- Autorebuild for GCC 4.3
+
+* Sat Dec 29 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.2-5
+- Added missing configuration examples
+- Corrected the license to "BSD"
+
+* Fri Dec 28 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.2-4
+- Build for fedora update
+
+* Fri Dec 28 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.2-2
+- Added missing changelog items
+
+* Thu Dec 20 2007 Stig Sandbeck Mathisen <ssm@linpro.no> - 1.1.2-1
+- Bumped the version number to 1.1.2.
+- Addeed build dependency on libxslt
+
+* Wed Sep 08 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-3
+- Added a patch, changeset 1913 from svn trunk. This makes varnish
+  more stable under specific loads. 
+
+* Tue Sep 06 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-2
+- Removed autogen call (only diff from relase tarball)
+
+* Mon Aug 20 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-1
+- Bumped the version number to 1.1.1.
+
+* Tue Aug 14 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.svn
+- Update for 1.1 branch
+- Added the devel package for the header files and static library files
+- Added a varnish user, and fixed the init script accordingly
+
+* Thu Jul 05 2007 Dag-Erling Smørgrav <des@des.no> - 1.1-1
+- Bump Version and Release for 1.1
+
+* Mon May 28 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.0.4-3
+- Fixed initrc-script bug only visible on el4 (fixes #107)
+
 * Sun May 20 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.0.4-2
 - Repack from unchanged 1.0.4 tarball
 - Final review request and CVS request for Fedora Extras
+- Repack with extra obsoletes for upgrading from older sf.net package
 
 * Fri May 18 2007 Dag-Erling Smørgrav <des@des.no> - 1.0.4-1
 - Bump Version and Release for 1.0.4
