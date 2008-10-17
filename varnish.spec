@@ -1,18 +1,11 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
-Version: 2.0
-Release: 0.8.beta1%{?dist}
+Version: 2.0.1
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
-#Source0: http://varnish.projects.linpro.no/static/varnish-cache.tar.gz
-#Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
-Source0: http://downloads.sourceforge.net/varnish/varnish-2.0-beta1.tar.gz
-Patch0: varnish.lockfile.patch
-Patch1: varnish.coresize.patch
-Patch2: varnish.vcl_changes.patch
-Patch3: varnish.cs3157.patch
-Patch4: varnish.endianfix.cs3170-3071.patch
+Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -67,32 +60,26 @@ Varnish is a high-performance HTTP accelerator
 #Varnish is a high-performance HTTP accelerator
 
 %prep
-#%setup -q
-%setup -q -n varnish-2.0-beta1
-
-%patch0 -p0
-%patch1 -p0
-%patch2 -p0
-%patch3 -p0
-%patch4 -p0
+%setup -q
+#%setup -q -n varnish-cache
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
-# ./autogen.sh
+#./autogen.sh
 
 # Hack to get 32- and 64-bits tests run concurrently on the same build machine
 case `uname -m` in
-    ppc64 | s390x | x86_64 | sparc64 )
-        sed -i ' 
-            s,9001,9011,g;
-            s,9080,9090,g; 
-            s,9081,9091,g; 
-            s,9082,9092,g; 
-            s,9180,9190,g;
-        ' bin/varnishtest/*.c bin/varnishtest/tests/*vtc
-        ;;
-    *)
-        ;;
+	ppc64 | s390x | x86_64 | sparc64 )
+		sed -i ' 
+			s,9001,9011,g;
+			s,9080,9090,g; 
+			s,9081,9091,g; 
+			s,9082,9092,g; 
+			s,9180,9190,g;
+		' bin/varnishtest/*.c bin/varnishtest/tests/*vtc
+		;;
+	*)
+		;;
 esac
 
 mkdir examples
@@ -101,12 +88,17 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 %build
 
 # Remove "--disable static" if you want to build static libraries 
+# jemalloc is not compatible with Red Hat's ppc64 RHEL5 kernel koji server :-(
+%ifarch ppc64 ppc
+%configure --disable-static --localstatedir=/var/lib --disable-jemalloc
+%else
 %configure --disable-static --localstatedir=/var/lib
+%endif
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g;
-        s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
+	s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
 %{__make} %{?_smp_mflags}
 
@@ -121,14 +113,16 @@ EOF
 
 tail -n +11 etc/default.vcl >> redhat/default.vcl
 
-%if "%dist" == "el4"
-    sed -i 's,--pidfile \$pidfile,,g;
-            s,status -p \$pidfile,status,g;
-            s,killproc -p \$pidfile,killproc,g' \
-    redhat/varnish.initrc redhat/varnishlog.initrc
+%if 0%{?fedora}%{?rhel} == 0 || 0%{?rhel} <= 4 && 0%{?fedora} <= 8
+	# Old style daemon function
+	sed -i 's,--pidfile \$pidfile,,g;
+		s,status -p \$pidfile,status,g;
+		s,killproc -p \$pidfile,killproc,g' \
+	redhat/varnish.initrc redhat/varnishlog.initrc redhat/varnishncsa.initrc
 %endif
 
 %check
+LD_LIBRARY_PATH="lib/libvarnish/.libs:lib/libvarnishcompat/.libs:lib/libvarnishapi/.libs:lib/libvcl/.libs" bin/varnishd/varnishd -b 127.0.0.1:80 -C -n /tmp/foo
 %{__make} check LD_LIBRARY_PATH="../../lib/libvarnish/.libs:../../lib/libvarnishcompat/.libs:../../lib/libvarnishapi/.libs:../../lib/libvcl/.libs"
 
 %install
@@ -149,6 +143,7 @@ mkdir -p %{buildroot}/var/run/varnish
 %{__install} -D -m 0644 redhat/varnish.logrotate %{buildroot}%{_sysconfdir}/logrotate.d/varnish
 %{__install} -D -m 0755 redhat/varnish.initrc %{buildroot}%{_initrddir}/varnish
 %{__install} -D -m 0755 redhat/varnishlog.initrc %{buildroot}%{_initrddir}/varnishlog
+%{__install} -D -m 0755 redhat/varnishncsa.initrc %{buildroot}%{_initrddir}/varnishncsa
 
 %clean
 rm -rf %{buildroot}
@@ -169,6 +164,7 @@ rm -rf %{buildroot}
 %config(noreplace) %{_sysconfdir}/logrotate.d/varnish
 %{_initrddir}/varnish
 %{_initrddir}/varnishlog
+%{_initrddir}/varnishncsa
 
 %files libs
 %defattr(-,root,root,-)
@@ -200,26 +196,23 @@ rm -rf %{buildroot}
 %pre
 getent group varnish >/dev/null || groupadd -r varnish
 getent passwd varnish >/dev/null || \
-    useradd -r -g varnish -d /var/lib/varnish -s /sbin/nologin \
-        -c "Varnish http accelerator user" varnish
+	useradd -r -g varnish -d /var/lib/varnish -s /sbin/nologin \
+		-c "Varnish http accelerator user" varnish
 exit 0
 
 %post
 /sbin/chkconfig --add varnish
 /sbin/chkconfig --add varnishlog
+/sbin/chkconfig --add varnishncsa 
 
 %preun
 if [ $1 -lt 1 ]; then
   /sbin/service varnish stop > /dev/null 2>&1
   /sbin/service varnishlog stop > /dev/null 2>&1
+  /sbin/service varnishncsa stop > /dev/null 2>%1
   /sbin/chkconfig --del varnish
   /sbin/chkconfig --del varnishlog
-fi
-
-%postun
-if [ $1 -ge 1 ]; then
-  /sbin/service varnish condrestart > /dev/null 2>&1
-  /sbin/service varnishlog condrestart > /dev/null 2>&1
+  /sbin/chkconfig --del varnishncsa 
 fi
 
 %post libs -p /sbin/ldconfig
@@ -227,6 +220,29 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Fri Oct 17 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0.1-1
+- 2.0.1 released, a bugfix release. New upstream sources
+- Package now also available in EPEL
+
+* Wed Oct 15 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-1
+- 2.0 released. New upstream sources
+- Disabled jemalloc on ppc and ppc64. Added a note in README.redhat
+- Synced to upstream again. No more patches needed.
+
+* Wed Oct 08 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.11.rc1
+- 2.0-rc1 released. New upstream sources
+- Added a patch for pagesize to match redhat's rhel5 ppc64 koji build boxes
+- Added a patch for test a00008, from r3269
+- Removed condrestart in postscript at upgrade. We don't want that
+
+* Fri Sep 26 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.10.beta2
+- 2.0-beta2 released. New upstream sources
+- Whitespace changes to make rpmlint more happy
+
+* Fri Sep 12 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.9.20080912svn3184
+- Added varnisnsca init script (Colin Hill)
+- Corrected varnishlog init script (Colin Hill)
+
 * Tue Sep 09 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.8.beta1
 - Added a patch from r3171 that fixes an endian bug on ppc and ppc64
 - Added a hack that changes the varnishtest ports for 64bits builds,
