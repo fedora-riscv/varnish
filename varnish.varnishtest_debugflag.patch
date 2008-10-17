@@ -1,0 +1,23 @@
+diff -Naur ../varnish-2.0-beta2.orig/bin/varnishtest/Makefile.am ./bin/varnishtest/Makefile.am
+--- ../varnish-2.0-beta2.orig/bin/varnishtest/Makefile.am	2008-09-24 20:05:19.000000000 +0200
++++ ./bin/varnishtest/Makefile.am	2008-09-26 12:34:05.565663207 +0200
+@@ -1,6 +1,6 @@
+ # $Id: Makefile.am 3139 2008-08-28 11:03:23Z tfheen $
+ 
+-TESTS_ENVIRONMENT = ./varnishtest
++TESTS_ENVIRONMENT = ./varnishtest -v
+ TESTS = $(srcdir)/tests/*.vtc
+ 
+ DISTCLEANFILES = _.ok
+diff -Naur ../varnish-2.0-beta2.orig/bin/varnishtest/Makefile.in ./bin/varnishtest/Makefile.in
+--- ../varnish-2.0-beta2.orig/bin/varnishtest/Makefile.in	2008-09-24 20:36:06.000000000 +0200
++++ ./bin/varnishtest/Makefile.in	2008-09-26 12:36:07.190263234 +0200
+@@ -199,7 +199,7 @@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ varnishconfdir = @varnishconfdir@
+-TESTS_ENVIRONMENT = ./varnishtest
++TESTS_ENVIRONMENT = ./varnishtest -v
+ TESTS = $(srcdir)/tests/*.vtc
+ DISTCLEANFILES = _.ok
+ INCLUDES = -I$(top_srcdir)/include
