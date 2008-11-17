@@ -1,17 +1,18 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
-Version: 2.0.1
+Version: 2.0.2
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
+Patch0: varnish.varnishtest_debugflag.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
 #BuildRequires: automake autoconf libtool
 BuildRequires: ncurses-devel libxslt groff
-Requires: kernel >= 2.6.0 varnish-libs = %{version}-%{release}
+Requires: varnish-libs = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
 Requires(pre): shadow-utils
@@ -43,7 +44,7 @@ Varnish is a high-performance HTTP accelerator.
 Summary: Development files for %{name}-libs
 Group: System Environment/Libraries
 BuildRequires: ncurses-devel
-Requires: kernel >= 2.6.0 varnish-libs = %{version}-%{release}
+Requires: varnish-libs = %{version}-%{release}
 
 %description libs-devel
 Development files for %{name}-libs
@@ -53,7 +54,7 @@ Varnish is a high-performance HTTP accelerator
 #Summary: Files for static linking of %{name} library functions
 #Group: System Environment/Libraries
 #BuildRequires: ncurses-devel
-#Requires: kernel >= 2.6.0 varnish-libs-devel = %{version}-%{release}
+#Requires: varnish-libs-devel = %{version}-%{release}
 #
 #%description libs-static
 #Files for static linking of varnish library functions
@@ -62,6 +63,8 @@ Varnish is a high-performance HTTP accelerator
 %prep
 %setup -q
 #%setup -q -n varnish-cache
+
+%patch0
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
@@ -122,6 +125,13 @@ tail -n +11 etc/default.vcl >> redhat/default.vcl
 %endif
 
 %check
+# rhel5 on ppc64 is just too strange
+%ifarch ppc64
+	%if 0%{?rhel} > 4
+		cp bin/varnishd/.libs/varnishd bin/varnishd/lt-varnishd
+	%endif
+%endif
+
 LD_LIBRARY_PATH="lib/libvarnish/.libs:lib/libvarnishcompat/.libs:lib/libvarnishapi/.libs:lib/libvcl/.libs" bin/varnishd/varnishd -b 127.0.0.1:80 -C -n /tmp/foo
 %{__make} check LD_LIBRARY_PATH="../../lib/libvarnish/.libs:../../lib/libvarnishcompat/.libs:../../lib/libvarnishapi/.libs:../../lib/libvcl/.libs"
 
@@ -220,13 +230,25 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Mon Nov 10 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0.2-1
+  New upstream release 2.0.2. A bugfix release
+
+* Sun Nov 02 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0.1-2
+- Removed the requirement for kernel => 2.6.0. All supported
+  platforms meets this, and it generates strange errors in EPEL
+
 * Fri Oct 17 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0.1-1
 - 2.0.1 released, a bugfix release. New upstream sources
+- Package now also available in EPEL
+
+* Thu Oct 16 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-2
+- Readded the debugflag patch. It's so practical
+- Added a strange workaround for make check on ppc64
 
 * Wed Oct 15 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-1
 - 2.0 released. New upstream sources
 - Disabled jemalloc on ppc and ppc64. Added a note in README.redhat
-- Synced to upstream again. No more patches needed.
+- Synced to upstream again. No more patches needed
 
 * Wed Oct 08 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0-0.11.rc1
 - 2.0-rc1 released. New upstream sources
