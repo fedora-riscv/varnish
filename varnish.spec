@@ -1,12 +1,13 @@
 Summary: Varnish is a high-performance HTTP accelerator
 Name: varnish
 Version: 2.0.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
 Patch0: varnish.varnishtest_debugflag.patch
+Patch1: varnish.timeout_backport.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -65,6 +66,7 @@ Varnish is a high-performance HTTP accelerator
 #%setup -q -n varnish-cache
 
 %patch0
+%patch1
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
@@ -230,6 +232,9 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Fri Dec 12 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0.2-2
+  Added a fix for a timeout bug, backported from trunk
+
 * Mon Nov 10 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0.2-1
   New upstream release 2.0.2. A bugfix release
 
