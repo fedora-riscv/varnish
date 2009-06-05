@@ -1,12 +1,13 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.0.3
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
 Patch0: varnish.varnishtest_debugflag.patch
+Patch1: varnish.s390x_pagesize.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -65,6 +66,7 @@ Varnish is a high-performance HTTP accelerator
 #%setup -q -n varnish-cache
 
 %patch0 -p0
+%patch1 -p0
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
@@ -91,7 +93,7 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 %build
 
 # Remove "--disable static" if you want to build static libraries 
-# jemalloc is not compatible with Red Hat's ppc64 RHEL5 kernel koji server :-(
+# jemalloc is not compatible with Red Hat's ppc* RHEL5 kernel koji server :-(
 %ifarch ppc64 ppc
 %configure --disable-static --localstatedir=/var/lib --disable-jemalloc
 %else
@@ -235,6 +237,9 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Thu May 04 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.3-3
+- Added a s390 specific patch to libjemalloc.
+
 * Wed Feb 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.3-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
 
