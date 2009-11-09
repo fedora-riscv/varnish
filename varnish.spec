@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 2.0.4
-Release: 4%{?dist}
+Version: 2.0.5
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -239,6 +239,9 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Mon Nov 09 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.5-1
+- New upstream release
+
 * Thu Aug 13 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-4
 - Added a sparc specific patch to libjemalloc.
 
