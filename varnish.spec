@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -9,11 +9,12 @@ URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-2.1.tar.gz
 patch0: varnish.S-option.patch
 patch1: varnish.floor.patch
+patch2: varnish.changes-2.1.0.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
 BuildRequires: automake autoconf libtool
-BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig
+BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig pcre
 Requires: varnish-libs = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
@@ -74,6 +75,7 @@ Varnish is a high-performance HTTP accelerator
 
 %patch0
 %patch1
+%patch2
 
 # Makefile.am was patched. Needs to rerun autoconf
 ./autogen.sh
@@ -108,6 +110,11 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 %else
 	%configure --disable-static --localstatedir=/var/lib
 %endif
+
+# Have to regenerate the docs because of patched doc/changes-2.0.6-2.1.0.xml
+pushd doc/
+make clean
+popd
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
@@ -256,8 +263,12 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Wed Apr 14 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.1.0-2
+- Added a patch from svn that fixes doc/changes-2.0.6-2.1.0.xml
+
 * Tue Apr 06 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.1.0-1
-- New upstream release; note: Configuration changes, see the README
+- New upstream release; note: Configuration changes, see 
+  doc/changes-2.1.0.html
 - Removed unneeded patches 
 - CVE-2009-2936: Added a patch from Debian that adds the -S option 
   to the varnisdh(1) manpage and to the sysconfig defaults, thus
