@@ -1,23 +1,25 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 2.0.6
-Release: 2%{?dist}
+Version: 2.1.0
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
-Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
-Patch0: varnish.varnishtest_debugflag.patch
-Patch1: varnish.changes-2.0.6.patch
+#Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
+Source0: http://downloads.sourceforge.net/varnish/varnish-2.1.tar.gz
+patch0: varnish.S-option.patch
+patch1: varnish.floor.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
-#BuildRequires: automake autoconf libtool
-BuildRequires: ncurses-devel libxslt groff
+BuildRequires: automake autoconf libtool
+BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig
 Requires: varnish-libs = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
+Requires: pcre
 Requires(pre): shadow-utils
-Requires(post): /sbin/chkconfig
+Requires(post): /sbin/chkconfig, /usr/bin/mkpasswd
 Requires(preun): /sbin/chkconfig
 Requires(preun): /sbin/service
 Requires(preun): initscripts
@@ -62,7 +64,8 @@ Varnish is a high-performance HTTP accelerator
 #Varnish is a high-performance HTTP accelerator
 
 %prep
-%setup -q
+#%setup -q
+%setup -q -n varnish-2.1
 #%setup -q -n varnish-cache
 
 # The svn sources needs to generate a suitable configure script
@@ -71,6 +74,9 @@ Varnish is a high-performance HTTP accelerator
 
 %patch0
 %patch1
+
+# Makefile.am was patched. Needs to rerun autoconf
+./autogen.sh
 
 # Hack to get 32- and 64-bits tests run concurrently on the same build machine
 case `uname -m` in
@@ -128,11 +134,6 @@ tail -n +11 etc/default.vcl >> redhat/default.vcl
 		s,killproc -p \$pidfile,killproc,g' \
 	redhat/varnish.initrc redhat/varnishlog.initrc redhat/varnishncsa.initrc
 %endif
-
-# Fix for broken changes-2.0.6.html
-pushd doc
-%{__make} clean; %{__make}
-popd
 
 %check
 # rhel5 on ppc64 is just too strange
@@ -238,6 +239,7 @@ exit 0
 /sbin/chkconfig --add varnish
 /sbin/chkconfig --add varnishlog
 /sbin/chkconfig --add varnishncsa 
+test -f /etc/varnish/secret || (mkpasswd > /etc/varnish/secret && chmod 0600 /etc/varnish/secret)
 
 %preun
 if [ $1 -lt 1 ]; then
@@ -254,6 +256,16 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Tue Apr 06 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.1.0-1
+- New upstream release; note: Configuration changes, see the README
+- Removed unneeded patches 
+- CVE-2009-2936: Added a patch from Debian that adds the -S option 
+  to the varnisdh(1) manpage and to the sysconfig defaults, thus
+  password-protecting the admin interface port (#579536,#579533)
+- Generates that password in the post script, requires mkpasswd
+- Added a patch from Robert Scheck for explicit linking to libm
+- Requires pcre
+
 * Wed Dec 23 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.6-2
 - Added a test that enables jemalloc on ppc if the kernel is
   not a rhel5 kernel (as on redhat builders)
