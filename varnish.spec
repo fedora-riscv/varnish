@@ -1,19 +1,17 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 2.1.0
-Release: 2%{?dist}
+Version: 2.1.1
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
-#Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
-Source0: http://downloads.sourceforge.net/varnish/varnish-2.1.tar.gz
-patch0: varnish.S-option.patch
-patch1: varnish.floor.patch
-patch2: varnish.changes-2.1.0.patch
+Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
+Patch0: varnish.v00002fix.patch
+Patch1: varnish.from_r4750_fixes_lowspec_buildhost.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
-BuildRequires: automake autoconf libtool
+#BuildRequires: automake autoconf libtool
 BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig
 Requires: varnish-libs = %{version}-%{release}
 Requires: logrotate
@@ -65,20 +63,15 @@ Varnish is a high-performance HTTP accelerator
 #Varnish is a high-performance HTTP accelerator
 
 %prep
-#%setup -q
-%setup -q -n varnish-2.1
+%setup -q
 #%setup -q -n varnish-cache
+
+%patch0
+%patch1
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
 #./autogen.sh
-
-%patch0
-%patch1
-%patch2
-
-# Makefile.am was patched. Needs to rerun autoconf
-./autogen.sh
 
 # Hack to get 32- and 64-bits tests run concurrently on the same build machine
 case `uname -m` in
@@ -100,6 +93,12 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 
 %build
 
+# No pkgconfig/libpcre.pc in rhel4
+%if 0%{?rhel} == 4
+	export PCRE_CFLAGS=`pcre-config --cflags`
+	export PCRE_LIBS=`pcre-config --libs` 
+%endif
+
 # Remove "--disable static" if you want to build static libraries 
 # jemalloc is not compatible with Red Hat's ppc* RHEL5 kernel koji server :-(
 %ifarch ppc64 ppc
@@ -110,11 +109,6 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 %else
 	%configure --disable-static --localstatedir=/var/lib
 %endif
-
-# Have to regenerate the docs because of patched doc/changes-2.0.6-2.1.0.xml
-pushd doc/
-make clean
-popd
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
@@ -263,6 +257,13 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Tue Apr 27 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.1.1-1
+- New upstream release
+- Added a fix for missing pkgconfig/libpcre.pc on rhel4
+- Added a patch from trunk making the rpm buildable on lowspec
+  build hosts (like Red Hat's ppc build farm nodes)
+- Removed patches that are merged upstream
+
 * Wed Apr 14 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.1.0-2
 - Added a patch from svn that fixes changes-2.0.6-2.1.0.xml
 
