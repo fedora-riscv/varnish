@@ -1,13 +1,11 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 2.1.1
+Version: 2.1.2
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
-Patch0: varnish.v00002fix.patch
-Patch1: varnish.from_r4750_fixes_lowspec_buildhost.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -65,9 +63,6 @@ Varnish is a high-performance HTTP accelerator
 %prep
 %setup -q
 #%setup -q -n varnish-cache
-
-%patch0
-%patch1
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
@@ -257,6 +252,10 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Wed May 05 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.2-1
+- New upstream release
+- Remove patches merged upstream
+
 * Tue Apr 27 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.1.1-1
 - New upstream release
 - Added a fix for missing pkgconfig/libpcre.pc on rhel4
