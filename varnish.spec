@@ -1,11 +1,12 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 2.1.2
+Version: 2.1.3
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
+Patch1: varnish.s390_pagesize.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -63,6 +64,8 @@ Varnish is a high-performance HTTP accelerator
 %prep
 %setup -q
 #%setup -q -n varnish-cache
+
+%patch1
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
@@ -252,6 +255,10 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Thu Jul 29 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.3-1
+- New upstream release
+- Add a patch for jemalloc on s390 that lacks upstream
+
 * Wed May 05 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.2-1
 - New upstream release
 - Remove patches merged upstream
