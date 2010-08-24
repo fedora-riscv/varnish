@@ -1,23 +1,24 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 2.0.6
-Release: 2.2%{?dist}
+Version: 2.1.3
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
-Patch0: varnish.varnishtest_debugflag.patch
-Patch1: varnish.changes-2.0.6.patch
+Patch1: varnish.s390_pagesize.patch
+Patch2: varnish.ppc64_stacksize_test.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
 #BuildRequires: automake autoconf libtool
-BuildRequires: ncurses-devel libxslt groff
+BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig
 Requires: varnish-libs = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
+Requires: pcre
 Requires(pre): shadow-utils
-Requires(post): /sbin/chkconfig
+Requires(post): /sbin/chkconfig, /usr/bin/mkpasswd
 Requires(preun): /sbin/chkconfig
 Requires(preun): /sbin/service
 Requires(preun): initscripts
@@ -65,12 +66,16 @@ Varnish is a high-performance HTTP accelerator
 %setup -q
 #%setup -q -n varnish-cache
 
+%patch1
+
+# tests/c00031.vtc crashes on rhel6/ppc64 because of hardcoded stack size
+%ifarch ppc64
+%patch2
+%endif
+
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
 #./autogen.sh
-
-%patch0
-%patch1
 
 # Hack to get 32- and 64-bits tests run concurrently on the same build machine
 case `uname -m` in
@@ -92,13 +97,18 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 
 %build
 
+# No pkgconfig/libpcre.pc in rhel4
+%if 0%{?rhel} == 4
+	export PCRE_CFLAGS=`pcre-config --cflags`
+	export PCRE_LIBS=`pcre-config --libs` 
+%endif
+
 # Remove "--disable static" if you want to build static libraries 
-# jemalloc is not compatible with Red Hat's ppc* RHEL5 kernel koji server :-(
+# jemalloc is not compatible with Red Hat's ppc RHEL kernel koji server :-(
+# Fedora users running varnish on ppc with a fedora kernel might want to try
+# to build with jemalloc.
 %ifarch ppc64 ppc
-	if [[ `uname -r` =~ "2.6.18-.*" ]]
-		then %configure --disable-static --localstatedir=/var/lib --disable-jemalloc
-		else %configure --disable-static --localstatedir=/var/lib
-	fi
+	%configure --disable-static --localstatedir=/var/lib --disable-jemalloc
 %else
 	%configure --disable-static --localstatedir=/var/lib
 %endif
@@ -128,11 +138,6 @@ tail -n +11 etc/default.vcl >> redhat/default.vcl
 		s,killproc -p \$pidfile,killproc,g' \
 	redhat/varnish.initrc redhat/varnishlog.initrc redhat/varnishncsa.initrc
 %endif
-
-# Fix for broken changes-2.0.6.html
-pushd doc
-%{__make} clean; %{__make}
-popd
 
 %check
 # rhel5 on ppc64 is just too strange
@@ -238,6 +243,7 @@ exit 0
 /sbin/chkconfig --add varnish
 /sbin/chkconfig --add varnishlog
 /sbin/chkconfig --add varnishncsa 
+test -f /etc/varnish/secret || (mkpasswd > /etc/varnish/secret && chmod 0600 /etc/varnish/secret)
 
 %preun
 if [ $1 -lt 1 ]; then
@@ -254,7 +260,39 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
-* Wed Dec 23 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.6-2.2
+* Tue Aug 24 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.3-2
+- Added a RHEL6/ppc64 specific patch for that changes the hard coded
+  stack size in tests/c00031.vtc
+
+* Thu Jul 29 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.3-1
+- New upstream release
+- Add a patch for jemalloc on s390 that lacks upstream
+
+* Wed May 05 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.2-1
+- New upstream release
+- Remove patches merged upstream
+
+* Tue Apr 27 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.1.1-1
+- New upstream release
+- Added a fix for missing pkgconfig/libpcre.pc on rhel4
+- Added a patch from trunk making the rpm buildable on lowspec
+  build hosts (like Red Hat's ppc build farm nodes)
+- Removed patches that are merged upstream
+
+* Wed Apr 14 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.1.0-2
+- Added a patch from svn that fixes changes-2.0.6-2.1.0.xml
+
+* Tue Apr 06 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.1.0-1
+- New upstream release; note: Configuration changes, see the README
+- Removed unneeded patches 
+- CVE-2009-2936: Added a patch from Debian that adds the -S option 
+  to the varnisdh(1) manpage and to the sysconfig defaults, thus
+  password-protecting the admin interface port (#579536,#579533)
+- Generates that password in the post script, requires mkpasswd
+- Added a patch from Robert Scheck for explicit linking to libm
+- Requires pcre
+
+* Wed Dec 23 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.6-2
 - Added a test that enables jemalloc on ppc if the kernel is
   not a rhel5 kernel (as on redhat builders)
 - Removed tests c00031.vtc and r00387on rhel4/ppc as they fail
