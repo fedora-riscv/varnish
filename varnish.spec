@@ -1,13 +1,12 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.1.4
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://www.varnish-software.com/sites/default/files/%{name}-%{version}.tar.gz
 Patch1: varnish.s390_pagesize.patch
-Patch2: varnish.ppc64_stacksize_test.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -74,11 +73,6 @@ Documentation files for %name
 #%setup -q -n varnish-cache
 
 %patch1
-
-# tests/c00031.vtc crashes on rhel6/ppc64 because of hardcoded stack size
-%ifarch ppc64
-%patch2
-%endif
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
@@ -268,16 +262,18 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Mon Oct 25 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-2
+- Removed RHEL6/ppc64 specific patch that has been included upstream
+
 * Mon Oct 25 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-1
 - New upstream release
 - New URL for source tarball and main website
-- Removed patches included upstream
 - Prebuilt html docs now included, use that instead of running sphinx
 - Putting sphinx generated doc in a separate subpackage
 - Replaced specific include files with a wildcard glob
 
 * Tue Aug 24 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.3-2
-- Added a RHEL6/ppc64 specific patch for that changes the hard coded
+- Added a RHEL6/ppc64 specific patch that changes the hard coded
   stack size in tests/c00031.vtc
 
 * Thu Jul 29 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.3-1
