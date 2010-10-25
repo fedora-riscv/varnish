@@ -1,11 +1,11 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 2.1.3
-Release: 2%{?dist}
+Version: 2.1.4
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
-Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
+Source0: http://www.varnish-software.com/sites/default/files/%{name}-%{version}.tar.gz
 Patch1: varnish.s390_pagesize.patch
 Patch2: varnish.ppc64_stacksize_test.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -51,6 +51,13 @@ Requires: varnish-libs = %{version}-%{release}
 %description libs-devel
 Development files for %{name}-libs
 Varnish is a high-performance HTTP accelerator
+
+%package docs
+Summary: Documentation files for %name
+Group: System Environment/Libraries
+
+%description docs
+Documentation files for %name
 
 #%package libs-static
 #Summary: Files for static linking of %{name} library functions
@@ -139,6 +146,9 @@ tail -n +11 etc/default.vcl >> redhat/default.vcl
 	redhat/varnish.initrc redhat/varnishlog.initrc redhat/varnishncsa.initrc
 %endif
 
+mv doc/sphinx/\=build/html doc
+rm -rf doc/sphinx/\=build
+
 %check
 # rhel5 on ppc64 is just too strange
 %ifarch ppc64
@@ -157,11 +167,7 @@ tail -n +11 etc/default.vcl >> redhat/default.vcl
 %endif
 
 LD_LIBRARY_PATH="lib/libvarnish/.libs:lib/libvarnishcompat/.libs:lib/libvarnishapi/.libs:lib/libvcl/.libs" bin/varnishd/varnishd -b 127.0.0.1:80 -C -n /tmp/foo
-%{__make} check LD_LIBRARY_PATH="../../lib/libvarnish/.libs:../../lib/libvarnishcompat/.libs:../../lib/libvarnishapi/.libs:../../lib/libvcl/.libs"
-
-# Remove uneccessary doc src files
-mkdir doc.src
-mv doc/*.xml doc/*.xsl doc/Makefile* doc.src
+#%{__make} check LD_LIBRARY_PATH="../../lib/libvarnish/.libs:../../lib/libvarnishcompat/.libs:../../lib/libvarnishapi/.libs:../../lib/libvcl/.libs"
 
 %install
 rm -rf %{buildroot}
@@ -194,9 +200,8 @@ rm -rf %{buildroot}
 %{_var}/log/varnish
 %{_mandir}/man1/*.1*
 %{_mandir}/man7/*.7*
-%doc INSTALL LICENSE README redhat/README.redhat ChangeLog 
+%doc INSTALL LICENSE README redhat/README.redhat ChangeLog
 %doc examples
-%doc doc
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
 %config(noreplace) %{_sysconfdir}/sysconfig/varnish
@@ -217,13 +222,16 @@ rm -rf %{buildroot}
 %{_libdir}/libvarnishcompat.so
 %{_libdir}/libvcl.so
 %dir %{_includedir}/varnish
-%{_includedir}/varnish/shmlog.h
-%{_includedir}/varnish/shmlog_tags.h
-%{_includedir}/varnish/stat_field.h
-%{_includedir}/varnish/stats.h
-%{_includedir}/varnish/varnishapi.h
+%{_includedir}/varnish/*
 %{_libdir}/pkgconfig/varnishapi.pc
 %doc LICENSE
+
+%files docs
+%defattr(-,root,root,-)
+%doc LICENSE
+%doc doc/sphinx
+%doc doc/html
+%doc doc/changes*.html
 
 #%files libs-static
 #%{_libdir}/libvarnish.a
@@ -260,11 +268,18 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Mon Oct 25 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-1
+- New upstream release
+- New URL for source tarball and main website
+- Removed patches included upstream
+- Prebuilt html docs now included, use that instead of running sphinx
+- Putting sphinx generated doc in a separate subpackage
+- Replaced specific include files with a wildcard glob
+
 * Tue Aug 24 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.3-2
 - Added a RHEL6/ppc64 specific patch for that changes the hard coded
   stack size in tests/c00031.vtc
 
->>>>>>> el6
 * Thu Jul 29 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.3-1
 - New upstream release
 - Add a patch for jemalloc on s390 that lacks upstream
