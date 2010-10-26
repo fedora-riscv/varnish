@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.0.6
-Release: 2%{?dist}
+Release: 2.2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -254,7 +254,7 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
-* Wed Dec 23 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.6-2
+* Wed Dec 23 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.6-2.2
 - Added a test that enables jemalloc on ppc if the kernel is
   not a rhel5 kernel (as on redhat builders)
 - Removed tests c00031.vtc and r00387on rhel4/ppc as they fail
