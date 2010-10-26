@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.0.6
-Release: 2.2%{?dist}
+Release: 3%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -95,12 +95,7 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 # Remove "--disable static" if you want to build static libraries 
 # jemalloc is not compatible with Red Hat's ppc* RHEL5 kernel koji server :-(
 %ifarch ppc64 ppc
-	if [[ `uname -r` =~ "2.6.18-.*" ]]
-		then %configure --disable-static --localstatedir=/var/lib --disable-jemalloc
-		else %configure --disable-static --localstatedir=/var/lib
-	fi
-%else
-	%configure --disable-static --localstatedir=/var/lib
+	%configure --disable-static --localstatedir=/var/lib --disable-jemalloc
 %endif
 
 # We have to remove rpath - not allowed in Fedora
@@ -254,6 +249,9 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Tue Oct 26 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.0.6-3
+- Build fixes for ppc
+
 * Wed Dec 23 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.6-2.2
 - Added a test that enables jemalloc on ppc if the kernel is
   not a rhel5 kernel (as on redhat builders)
