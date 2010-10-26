@@ -8,6 +8,7 @@ URL: http://www.varnish-cache.org/
 Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
 Patch0: varnish.varnishtest_debugflag.patch
 Patch1: varnish.changes-2.0.6.patch
+Patch2: varnish.fix_v00006.vtc.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -71,6 +72,7 @@ Varnish is a high-performance HTTP accelerator
 
 %patch0
 %patch1
+%patch2
 
 # Hack to get 32- and 64-bits tests run concurrently on the same build machine
 case `uname -m` in
@@ -253,6 +255,7 @@ fi
 %changelog
 * Tue Oct 26 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.0.6-3
 - Build fixes for ppc
+- Added a patch for v00006.vtc that tames a malloc bonanza in some cases
 
 * Wed Dec 23 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.6-2.2
 - Added a test that enables jemalloc on ppc if the kernel is
