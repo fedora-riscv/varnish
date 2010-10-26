@@ -96,6 +96,8 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 # jemalloc is not compatible with Red Hat's ppc* RHEL5 kernel koji server :-(
 %ifarch ppc64 ppc
 	%configure --disable-static --localstatedir=/var/lib --disable-jemalloc
+%else
+	%configure --disable-static --localstatedir=/var/lib
 %endif
 
 # We have to remove rpath - not allowed in Fedora
