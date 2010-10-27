@@ -5,7 +5,7 @@
  
  # Only one pool, to avoid getting more than one work thread
 -varnish v1 -arg "-p thread_pools=1 -w1,1,300" -vcl {
-+varnish v1 -arg "-p thread_pools=1 -w1,1,300 -s file,/var/tmp,1G" -vcl {
++varnish v1 -arg "-p thread_pools=1 -w1,1,300 -s file,/tmp,10M" -vcl {
  	backend b1 {
  		.host = "127.0.0.1";
  		.port = "9080";
