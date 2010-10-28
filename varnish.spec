@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.1.4
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -97,6 +97,10 @@ mkdir examples
 cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 
 %build
+# No rst2man in rhel4 or rhel5 (use pregenerated manpages)
+%if 0%{?rhel} <= 5
+	export RST2MAN=true
+%endif
 
 # No pkgconfig/libpcre.pc in rhel4
 %if 0%{?rhel} == 4
@@ -262,6 +266,9 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Thu Oct 28 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-3
+- Fixed missing manpages because of no rst2man in rhel4 and 5
+
 * Mon Oct 25 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-2
 - Removed RHEL6/ppc64 specific patch that has been included upstream
 
