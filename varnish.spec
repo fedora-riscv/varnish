@@ -1,12 +1,18 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.1.4
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://www.varnish-software.com/sites/default/files/%{name}-%{version}.tar.gz
+
 Patch1: varnish.s390_pagesize.patch
+Patch2: varnish.fix_initscript_missing_echo.r5498.patch
+Patch3: varnish.fix_Content-Length_header.r5461.patch
+Patch4: varnish.fix_missing_lsb_defaults_in_initscript.r5501.patch
+Patch5: varnish.add_varnish_vcl_reload.patch
+
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -27,9 +33,9 @@ Requires(preun): initscripts
 Requires: gcc
 
 %description
-This is the Varnish high-performance HTTP accelerator. Documentation
-wiki and additional information about Varnish is available on the following
-web site: http://www.varnish-cache.org/
+This is Varnish Cache, a high-performance HTTP accelerator.
+Documentation wiki and additional information about Varnish is
+available on the following web site: http://www.varnish-cache.org/
 
 %package libs
 Summary: Libraries for %{name}
@@ -39,7 +45,7 @@ BuildRequires: ncurses-devel
 
 %description libs
 Libraries for %{name}.
-Varnish is a high-performance HTTP accelerator.
+Varnish Cache is a high-performance HTTP accelerator
 
 %package libs-devel
 Summary: Development files for %{name}-libs
@@ -49,7 +55,7 @@ Requires: varnish-libs = %{version}-%{release}
 
 %description libs-devel
 Development files for %{name}-libs
-Varnish is a high-performance HTTP accelerator
+Varnish Cache is a high-performance HTTP accelerator
 
 %package docs
 Summary: Documentation files for %name
@@ -66,13 +72,17 @@ Documentation files for %name
 #
 #%description libs-static
 #Files for static linking of varnish library functions
-#Varnish is a high-performance HTTP accelerator
+#Varnish Cache is a high-performance HTTP accelerator
 
 %prep
 %setup -q
 #%setup -q -n varnish-cache
 
 %patch1
+%patch2
+%patch3
+%patch4
+%patch5
 
 # The svn sources needs to generate a suitable configure script
 # Release tarballs would not need this
@@ -109,9 +119,7 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 %endif
 
 # Remove "--disable static" if you want to build static libraries 
-# jemalloc is not compatible with Red Hat's ppc RHEL kernel koji server :-(
-# Fedora users running varnish on ppc with a fedora kernel might want to try
-# to build with jemalloc.
+# jemalloc is not compatible with Red Hat's ppc64 RHEL kernel :-(
 %ifarch ppc64 ppc
 	%configure --disable-static --localstatedir=/var/lib --disable-jemalloc
 %else
@@ -186,6 +194,7 @@ mkdir -p %{buildroot}/var/run/varnish
 %{__install} -D -m 0755 redhat/varnish.initrc %{buildroot}%{_initrddir}/varnish
 %{__install} -D -m 0755 redhat/varnishlog.initrc %{buildroot}%{_initrddir}/varnishlog
 %{__install} -D -m 0755 redhat/varnishncsa.initrc %{buildroot}%{_initrddir}/varnishncsa
+%{__install} -D -m 0755 redhat/varnish_reload_vcl %{buildroot}%{_bindir}/varnish_reload_vcl
 
 %clean
 rm -rf %{buildroot}
@@ -215,10 +224,7 @@ rm -rf %{buildroot}
 
 %files libs-devel
 %defattr(-,root,root,-)
-%{_libdir}/libvarnish.so
-%{_libdir}/libvarnishapi.so
-%{_libdir}/libvarnishcompat.so
-%{_libdir}/libvcl.so
+%{_libdir}/lib*.so
 %dir %{_includedir}/varnish
 %{_includedir}/varnish/*
 %{_libdir}/pkgconfig/varnishapi.pc
@@ -242,7 +248,7 @@ rm -rf %{buildroot}
 getent group varnish >/dev/null || groupadd -r varnish
 getent passwd varnish >/dev/null || \
 	useradd -r -g varnish -d /var/lib/varnish -s /sbin/nologin \
-		-c "Varnish http accelerator user" varnish
+		-c "Varnish Cache" varnish
 exit 0
 
 %post
@@ -266,6 +272,16 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Wed Nov 04 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-4
+- Added a patch fixing a missing echo in the init script that
+  masked failure output from the script
+- Added a patch from upstream, fixing a problem with Content-Length
+  headers (upstream r5461, upstream bug #801)
+- Added a patch from upstream, adding empty Default-Start and Default-Stop
+  to initscripts for better lsb compliance
+- Added varnish_reload_vcl from trunk
+- Synced descriptions from release spec
+
 * Thu Oct 28 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-3
 - Fixed missing manpages because of no rst2man in rhel4 and 5
 
