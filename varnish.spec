@@ -1,27 +1,25 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 2.1.4
-Release: 4%{?dist}
+Version: 2.1.5
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
-Source0: http://www.varnish-software.com/sites/default/files/%{name}-%{version}.tar.gz
+Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
 
-Patch1: varnish.s390_pagesize.patch
-Patch2: varnish.fix_initscript_missing_echo.r5498.patch
-Patch3: varnish.fix_Content-Length_header.r5461.patch
-Patch4: varnish.fix_missing_lsb_defaults_in_initscript.r5501.patch
-Patch5: varnish.add_varnish_vcl_reload.patch
+Patch6: varnish.jemalloc_as_system_library.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-# The svn sources needs autoconf, automake and libtool to generate a suitable
-# configure script. Release tarballs would not need this
-#BuildRequires: automake autoconf libtool
-BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig
+
+# Needs to regenerate configure after patching in jemalloc system lib support
+BuildRequires: automake autoconf libtool
+
+BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig jemalloc-devel
 Requires: varnish-libs = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
 Requires: pcre
+Requires: jemalloc
 Requires(pre): shadow-utils
 Requires(post): /sbin/chkconfig, /usr/bin/mkpasswd
 Requires(preun): /sbin/chkconfig
@@ -78,15 +76,11 @@ Documentation files for %name
 %setup -q
 #%setup -q -n varnish-cache
 
-%patch1
-%patch2
-%patch3
-%patch4
-%patch5
+%patch6
 
-# The svn sources needs to generate a suitable configure script
+# Needs to regenerate configure after patching in jemalloc system lib support
 # Release tarballs would not need this
-#./autogen.sh
+./autogen.sh
 
 # Hack to get 32- and 64-bits tests run concurrently on the same build machine
 case `uname -m` in
@@ -194,7 +188,7 @@ mkdir -p %{buildroot}/var/run/varnish
 %{__install} -D -m 0755 redhat/varnish.initrc %{buildroot}%{_initrddir}/varnish
 %{__install} -D -m 0755 redhat/varnishlog.initrc %{buildroot}%{_initrddir}/varnishlog
 %{__install} -D -m 0755 redhat/varnishncsa.initrc %{buildroot}%{_initrddir}/varnishncsa
-%{__install} -D -m 0755 redhat/varnish_reload_vcl %{buildroot}%{_bindir}/varnish_reload_vcl
+%{__install} -D -m 0755 redhat/varnish_reload_vcl %{buildroot}%{_sbindir}/varnish_reload_vcl
 
 %clean
 rm -rf %{buildroot}
@@ -272,6 +266,13 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Tue Feb 01 2011 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.5-1
+- New upstream release
+- New download location
+- Moved varnish_reload_vcl to sbin
+- Removed patches included upstream
+- Use jemalloc as system installed library
+
 * Wed Nov 04 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-4
 - Added a patch fixing a missing echo in the init script that
   masked failure output from the script
