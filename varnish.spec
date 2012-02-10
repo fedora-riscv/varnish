@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.1.5
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -266,6 +266,9 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Fri Feb 10 2012 Petr Pisar <ppisar@redhat.com> - 2.1.5-4
+- Rebuild against PCRE 8.30
+
 * Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.1.5-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
 
