@@ -282,6 +282,10 @@ fi
 - Removed patches included upstream
 - Use jemalloc as system installed library
 
+* Mon Nov 15 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 3.0.0-0.svn20101115r5543
+- Merged some changes from fedora
+- Upped general version to 3.0 prerelease in trunk
+
 * Wed Nov 04 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-4
 - Added a patch fixing a missing echo in the init script that
   masked failure output from the script
@@ -304,10 +308,16 @@ fi
 - Prebuilt html docs now included, use that instead of running sphinx
 - Putting sphinx generated doc in a separate subpackage
 - Replaced specific include files with a wildcard glob
+- Needs python-sphinx and deps to build sphinx documentation
 
 * Tue Aug 24 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.3-2
 - Added a RHEL6/ppc64 specific patch that changes the hard coded
   stack size in tests/c00031.vtc
+
+* Thu Jul 29 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-0.svn20100824r5117
+- Replaced specific include files with a wildcard glob
+- Needs python-sphinx and deps to build sphinx documentation
+- Builds html and latex documentation. Put that in a subpackage varnish-docs
 
 * Thu Jul 29 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.3-1
 - New upstream release
