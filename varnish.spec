@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 3.0.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -307,6 +307,10 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Mon Mar 12 2012 Ingvar Hagelund <ingvar@redpill-linpro.com> - 3.0.2-2
+- Added PrivateTmp=true to varnishd unit file, closing #782539
+- Fixed comment typos in varnish unit file
+
 * Tue Mar 06 2012 Ingvar Hagelund <ingvar@redpill-linpro.com> - 3.0.2-1
 - New upstream version 3.0.2
 - Removed INSTALL as requested by rpmlint

@@ -6,8 +6,8 @@ After=syslog.target network.target
 
 #
 # If you want to make changes to this file, please copy it to 
-# /etc/systemd/system/varnish and make your changes there.
-# This will override the file kept at /lib/systemd/system/varnish
+# /etc/systemd/system/varnish.service and make your changes there.
+# This will override the file kept at /lib/systemd/system/varnish.service
 #
 # Enviroment variables may be found in /etc/varnish/varnish.params
 #
@@ -26,6 +26,7 @@ EnvironmentFile=/etc/varnish/varnish.params
 
 Type=forking
 PIDFile=/var/run/varnish.pid
+PrivateTmp=true
 ExecStart=/usr/sbin/varnishd \
 	-P /var/run/varnish.pid \
 	-f $VARNISH_VCL_CONF \
