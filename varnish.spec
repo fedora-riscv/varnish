@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 3.0.2
-Release: 3%{?dist}
+Version: 3.0.3
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -10,6 +10,7 @@ Source1: varnish.service
 Source2: varnish.params
 Source3: varnishncsa.service
 Source4: varnishlog.service
+Patch1:  varnish.no_pcre_jit.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
@@ -85,28 +86,17 @@ Documentation files for %name
 %setup -q
 #%setup -q -n varnish-cache
 
+%ifarch i386 i686 ppc
+%patch1
+%endif
+
 mkdir examples
 cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 
 %build
-# No rst2man in rhel4 or rhel5 (use pregenerated manpages)
-%if 0%{?rhel} <= 5
-	export RST2MAN=true
-%endif
-
-# No pkgconfig/libpcre.pc in rhel4
-%if 0%{?rhel} == 4
-	export PCRE_CFLAGS="`pcre-config --cflags`"
-	export PCRE_LIBS="`pcre-config --libs`" 
-%endif
 
 # Remove "--disable static" if you want to build static libraries 
-# jemalloc is not compatible with Red Hat's ppc64 RHEL kernel :-(
-%ifarch ppc64 ppc
-	%configure --disable-static --localstatedir=/var/lib --without-rst2man --without-rst2html --without-jemalloc
-%else
-	%configure --disable-static --localstatedir=/var/lib --without-rst2man --without-rst2html
-%endif
+%configure --disable-static --localstatedir=/var/lib
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
@@ -139,22 +129,6 @@ mv doc/sphinx/\=build/html doc
 rm -rf doc/sphinx/\=build
 
 %check
-# rhel5 on ppc64 is just too strange
-%ifarch ppc64
-	%if 0%{?rhel} > 4
-		cp bin/varnishd/.libs/varnishd bin/varnishd/lt-varnishd
-	%endif
-%endif
-
-# The redhat ppc builders seem to have some ulimit problems?
-# These tests work on a rhel4 ppc/ppc64 instance outside the builders
-%ifarch ppc64 ppc
-	%if 0%{?rhel} == 4
-		rm bin/varnishtest/tests/c00031.vtc
-		rm bin/varnishtest/tests/r00387.vtc
-	%endif
-%endif
-
 LD_LIBRARY_PATH="lib/libvarnish/.libs:lib/libvarnishcompat/.libs:lib/libvarnishapi/.libs:lib/libvcl/.libs:lib/libvgz/.libs" bin/varnishd/varnishd -b 127.0.0.1:80 -C -n /tmp/foo
 make check LD_LIBRARY_PATH="../../lib/libvarnish/.libs:../../lib/libvarnishcompat/.libs:../../lib/libvarnishapi/.libs:../../lib/libvcl/.libs:../../lib/libvgz/.libs"
 
@@ -265,12 +239,26 @@ exit 0
 
 %post
 %if 0%{?fedora} >= 17
+
+# Fedora 17
+%if 0%{?fedora} == 17
+# Initial installation
+if [ $1 -eq 1 ] ; then
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+fi
+
+# Fedora 18+
+%else
+%systemd_post varnish.service
+%endif
+
+# Other distros: Use chkconfig
 %else
 /sbin/chkconfig --add varnish
 /sbin/chkconfig --add varnishlog
 /sbin/chkconfig --add varnishncsa 
 %endif
+
 test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc/varnish/secret)
 
 %triggerun -- varnish < 3.0.2-1
@@ -287,9 +275,14 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 #/bin/systemctl try-restart varnish.service >/dev/null 2>&1 || :
 
 %preun
+
+%if 0%{?fedora} >= 18
+%systemd_preun varnish.service
+%else
+
 if [ $1 -lt 1 ]; then
-  # Package removal, not upgrade
-  %if 0%{?fedora} >= 17
+# Package removal, not upgrade
+  %if 0%{?fedora} == 17
   /bin/systemctl --no-reload disable varnish.service > /dev/null 2>&1 || :
   /bin/systemctl stop varnish.service > /dev/null 2>&1 || :
   %else
@@ -301,12 +294,24 @@ if [ $1 -lt 1 ]; then
   /sbin/chkconfig --del varnishncsa 
   %endif
 fi
+%endif
 
 %post libs -p /sbin/ldconfig
 
 %postun libs -p /sbin/ldconfig
+%if 0%{?fedora} >= 18
+%systemd_postun_with_restart varnish.service
+%endif
 
 %changelog
+* Tue Aug 21 2012 Ingvar Hagelund <ingvar@redpill-linpro.com> - 3.0.3-1
+- New upstream release
+- Remove unneeded hacks for ppc
+- Remove hacks for rhel4, we no longer support that
+- Remove unneeded hacks for docs, since we use the pregenerated docs
+- Add new systemd scriptlets from f18+
+- Added a patch switching off pcre jit on i386 and ppc to avoid upstream bug #1191 
+
 * Sun Jul 22 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0.2-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
 
