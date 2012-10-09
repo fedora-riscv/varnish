@@ -21,7 +21,7 @@ VARNISH_ADMIN_LISTEN_PORT=6082
 VARNISH_SECRET_FILE=/etc/varnish/secret   
 
 # The minimum and maximum number of worker threads to start
-VARNISH_MIN_THREADS=1                     
+VARNISH_MIN_THREADS=5                     
 VARNISH_MAX_THREADS=1000                  
 
 # Idle timeout for worker threads
