@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 3.0.3
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -307,6 +307,9 @@ fi
 %endif
 
 %changelog
+* Fri Feb 15 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0.3-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
+
 * Tue Oct 09 2012 Ingvar Hagelund <ingvar@redpill-linpro.com> - 3.0.3-3
 - Upped the minimum number of threads from 1 to 5, closes #861493
 
