@@ -1,7 +1,9 @@
+%global _hardened_build 1
+
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 3.0.3
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -301,12 +303,19 @@ fi
 
 %post libs -p /sbin/ldconfig
 
-%postun libs -p /sbin/ldconfig
+%postun libs 
+/sbin/ldconfig
 %if 0%{?fedora} >= 18
 %systemd_postun_with_restart varnish.service
 %endif
 
 %changelog
+* Wed May 15 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> 3.0.3-5
+- Added macro _hardened_build to enforce compiling with PIE, closes #955156
+- moved ldconfig in postun script to a shell line, since the following lines
+  may expand to more shell commands on fedora >=18
+- Corrected some bogus dates in the changelog
+
 * Fri Feb 15 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0.3-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
 
@@ -372,7 +381,7 @@ fi
 - Merged some changes from fedora
 - Upped general version to 3.0 prerelease in trunk
 
-* Wed Nov 04 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-4
+* Thu Nov 04 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-4
 - Added a patch fixing a missing echo in the init script that
   masked failure output from the script
 - Added a patch from upstream, fixing a problem with Content-Length
@@ -453,7 +462,7 @@ fi
 * Sun Jul 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.4-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
 
-* Thu May 04 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-2
+* Thu Jun 04 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-2
 - Added a s390 specific patch to libjemalloc.
 
 * Fri Mar 27 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-1
@@ -554,11 +563,11 @@ fi
 - Bumped the version number to 1.1.2.
 - Addeed build dependency on libxslt
 
-* Wed Sep 08 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-3
+* Fri Sep 07 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-3
 - Added a patch, changeset 1913 from svn trunk. This makes varnish
   more stable under specific loads. 
 
-* Tue Sep 06 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-2
+* Thu Sep 06 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-2
 - Removed autogen call (only diff from relase tarball)
 
 * Mon Aug 20 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-1
