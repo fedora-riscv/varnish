@@ -3,7 +3,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 3.0.3
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -89,7 +89,7 @@ Documentation files for %name
 %setup -q
 #%setup -q -n varnish-cache
 
-%ifarch i386 i686 ppc
+%ifarch i386 i686 ppc %{arm}
 %patch1
 %endif
 
@@ -310,6 +310,9 @@ fi
 %endif
 
 %changelog
+* Sun Jul 28 2013 Dennis Gilmore <dennis@ausil.us> - 3.0.3-6
+- no pcre jit on arm arches
+
 * Wed May 15 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> 3.0.3-5
 - Added macro _hardened_build to enforce compiling with PIE, closes #955156
 - moved ldconfig in postun script to a shell line, since the following lines
