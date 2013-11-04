@@ -2,8 +2,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 3.0.3
-Release: 6%{?dist}
+Version: 3.0.4
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -12,18 +12,18 @@ Source1: varnish.service
 Source2: varnish.params
 Source3: varnishncsa.service
 Source4: varnishlog.service
-Patch1:  varnish.no_pcre_jit.patch
 Patch2:  varnish.fix_ppc64_upstream_bug_1194.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
 #BuildRequires: automake autoconf libtool python-docutils
-BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig jemalloc-devel
+BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig jemalloc-devel libedit-devel
 Requires: varnish-libs = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
 Requires: pcre
 Requires: jemalloc
+Requires: redhat-rpm-config
 Requires(pre): shadow-utils
 Requires(post): /sbin/chkconfig, /usr/bin/uuidgen
 Requires(preun): /sbin/chkconfig
@@ -89,10 +89,6 @@ Documentation files for %name
 %setup -q
 #%setup -q -n varnish-cache
 
-%ifarch i386 i686 ppc %{arm}
-%patch1
-%endif
-
 %patch2
 
 mkdir examples
@@ -106,7 +102,7 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g;
-	s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
+        s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
 make %{?_smp_mflags}
 
@@ -121,12 +117,12 @@ EOF
 
 tail -n +11 etc/default.vcl >> redhat/default.vcl
 
-%if 0%{?fedora}%{?rhel} == 0 || 0%{?rhel} <= 4 && 0%{?fedora} <= 8
-	# Old style daemon function
-	sed -i 's,--pidfile \$pidfile,,g;
-		s,status -p \$pidfile,status,g;
-		s,killproc -p \$pidfile,killproc,g' \
-	redhat/varnish.initrc redhat/varnishlog.initrc redhat/varnishncsa.initrc
+%if 0%{?fedora}%{?rhel} != 0 && 0%{?rhel} <= 4 && 0%{?fedora} <= 8
+        # Old style daemon function
+        sed -i 's,--pidfile \$pidfile,,g;
+                s,status -p \$pidfile,status,g;
+                s,killproc -p \$pidfile,killproc,g' \
+        redhat/varnish.initrc redhat/varnishlog.initrc redhat/varnishncsa.initrc
 %endif
 
 rm -rf doc/sphinx/\=build/html/_sources
@@ -238,8 +234,8 @@ rm -rf %{buildroot}
 %pre
 getent group varnish >/dev/null || groupadd -r varnish
 getent passwd varnish >/dev/null || \
-	useradd -r -g varnish -d /var/lib/varnish -s /sbin/nologin \
-		-c "Varnish Cache" varnish
+        useradd -r -g varnish -d /var/lib/varnish -s /sbin/nologin \
+                -c "Varnish Cache" varnish
 exit 0
 
 %post
@@ -310,6 +306,15 @@ fi
 %endif
 
 %changelog
+* Mon Aug 12 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> 3.0.4-1
+- New upstream release
+- Added libedit-devel to the build reqs
+- Changed the old-style initrc sed patching to a blacklist as in upstream
+- Some tab vs space cleanup to make rpmlint more happy
+- Added requirement of redhat-rpm-config, which provides redhat-hardened-cc1,
+  needed for _hardened_build, closes #975147
+- Removed no-pcre patch, as pcre is now switched off by default upstream
+
 * Sun Jul 28 2013 Dennis Gilmore <dennis@ausil.us> - 3.0.3-6
 - no pcre jit on arm arches
 
