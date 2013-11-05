@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 3.0.3
-Release: 3%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -307,9 +307,6 @@ fi
 %endif
 
 %changelog
-* Tue Oct 09 2012 Ingvar Hagelund <ingvar@redpill-linpro.com> - 3.0.3-3
-- Upped the minimum number of threads from 1 to 5, closes #861493
-
 * Tue Sep 18 2012 Ingvar Hagelund <ingvar@redpill-linpro.com> - 3.0.3-2
 - Added a patch from phk, fixing upstream ppc64 bug #1194
 
