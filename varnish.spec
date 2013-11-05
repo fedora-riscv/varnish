@@ -1,19 +1,19 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 3.0.2
-Release: 1%{?dist}
+Version: 2.1.5
+Release: 4%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
-Source1: varnish.service
-Source2: varnish.params
-Source3: varnishncsa.service
-Source4: varnishlog.service
+
+Patch6: varnish.jemalloc_as_system_library.patch
+
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-# To build from git, start with a make dist, see redhat/README.redhat 
-# You will need at least automake autoconf libtool python-docutils
-#BuildRequires: automake autoconf libtool python-docutils
+
+# Needs to regenerate configure after patching in jemalloc system lib support
+BuildRequires: automake autoconf libtool
+
 BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig jemalloc-devel
 Requires: varnish-libs = %{version}-%{release}
 Requires: logrotate
@@ -24,16 +24,7 @@ Requires(pre): shadow-utils
 Requires(post): /sbin/chkconfig, /usr/bin/uuidgen
 Requires(preun): /sbin/chkconfig
 Requires(preun): /sbin/service
-%if %{undefined suse_version}
 Requires(preun): initscripts
-%endif
-%if 0%{?fedora} >= 17
-Requires(post): systemd-units
-Requires(post): systemd-sysv
-Requires(preun): systemd-units
-Requires(postun): systemd-units
-BuildRequires: systemd-units
-%endif
 
 # Varnish actually needs gcc installed to work. It uses the C compiler 
 # at runtime to compile the VCL configuration files. This is by design.
@@ -85,6 +76,27 @@ Documentation files for %name
 %setup -q
 #%setup -q -n varnish-cache
 
+%patch6
+
+# Needs to regenerate configure after patching in jemalloc system lib support
+# Release tarballs would not need this
+./autogen.sh
+
+# Hack to get 32- and 64-bits tests run concurrently on the same build machine
+case `uname -m` in
+	ppc64 | s390x | x86_64 | sparc64 )
+		sed -i ' 
+			s,9001,9011,g;
+			s,9080,9090,g; 
+			s,9081,9091,g; 
+			s,9082,9092,g; 
+			s,9180,9190,g;
+		' bin/varnishtest/*.c bin/varnishtest/tests/*vtc
+		;;
+	*)
+		;;
+esac
+
 mkdir examples
 cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 
@@ -96,16 +108,16 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 
 # No pkgconfig/libpcre.pc in rhel4
 %if 0%{?rhel} == 4
-	export PCRE_CFLAGS="`pcre-config --cflags`"
-	export PCRE_LIBS="`pcre-config --libs`" 
+	export PCRE_CFLAGS=`pcre-config --cflags`
+	export PCRE_LIBS=`pcre-config --libs` 
 %endif
 
 # Remove "--disable static" if you want to build static libraries 
 # jemalloc is not compatible with Red Hat's ppc64 RHEL kernel :-(
 %ifarch ppc64 ppc
-	%configure --disable-static --localstatedir=/var/lib --without-rst2man --without-rst2html --without-jemalloc
+	%configure --disable-static --localstatedir=/var/lib --disable-jemalloc
 %else
-	%configure --disable-static --localstatedir=/var/lib --without-rst2man --without-rst2html
+	%configure --disable-static --localstatedir=/var/lib
 %endif
 
 # We have to remove rpath - not allowed in Fedora
@@ -113,7 +125,7 @@ cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g;
 	s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
-make %{?_smp_mflags}
+%{__make} %{?_smp_mflags}
 
 head -6 etc/default.vcl > redhat/default.vcl
 
@@ -134,7 +146,6 @@ tail -n +11 etc/default.vcl >> redhat/default.vcl
 	redhat/varnish.initrc redhat/varnishlog.initrc redhat/varnishncsa.initrc
 %endif
 
-rm -rf doc/sphinx/\=build/html/_sources
 mv doc/sphinx/\=build/html doc
 rm -rf doc/sphinx/\=build
 
@@ -155,8 +166,8 @@ rm -rf doc/sphinx/\=build
 	%endif
 %endif
 
-LD_LIBRARY_PATH="lib/libvarnish/.libs:lib/libvarnishcompat/.libs:lib/libvarnishapi/.libs:lib/libvcl/.libs:lib/libvgz/.libs" bin/varnishd/varnishd -b 127.0.0.1:80 -C -n /tmp/foo
-make check LD_LIBRARY_PATH="../../lib/libvarnish/.libs:../../lib/libvarnishcompat/.libs:../../lib/libvarnishapi/.libs:../../lib/libvcl/.libs:../../lib/libvgz/.libs"
+LD_LIBRARY_PATH="lib/libvarnish/.libs:lib/libvarnishcompat/.libs:lib/libvarnishapi/.libs:lib/libvcl/.libs" bin/varnishd/varnishd -b 127.0.0.1:80 -C -n /tmp/foo
+%{__make} check LD_LIBRARY_PATH="../../lib/libvarnish/.libs:../../lib/libvarnishcompat/.libs:../../lib/libvarnishapi/.libs:../../lib/libvcl/.libs"
 
 %install
 rm -rf %{buildroot}
@@ -171,28 +182,13 @@ find %{buildroot}/%{_libdir}/ -name '*.la' -exec rm -f {} ';'
 mkdir -p %{buildroot}/var/lib/varnish
 mkdir -p %{buildroot}/var/log/varnish
 mkdir -p %{buildroot}/var/run/varnish
-mkdir -p %{buildroot}%{_sysconfdir}/ld.so.conf.d/
-install -D -m 0644 redhat/default.vcl %{buildroot}%{_sysconfdir}/varnish/default.vcl
-install -D -m 0644 redhat/varnish.logrotate %{buildroot}%{_sysconfdir}/logrotate.d/varnish
-
-# systemd support
-%if 0%{?fedora} >= 17
-mkdir -p %{buildroot}%{_unitdir}
-install -D -m 0644 %SOURCE1 %{buildroot}%{_unitdir}/varnish.service
-install -D -m 0644 %SOURCE2 %{buildroot}%{_sysconfdir}/varnish/varnish.params
-install -D -m 0644 %SOURCE3 %{buildroot}%{_unitdir}/varnishncsa.service
-install -D -m 0644 %SOURCE4 %{buildroot}%{_unitdir}/varnishlog.service
-sed -i 's,sysconfig/varnish,varnish/varnish.params,' redhat/varnish_reload_vcl
-# default is standard sysvinit
-%else
-install -D -m 0644 redhat/varnish.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/varnish
-install -D -m 0755 redhat/varnish.initrc %{buildroot}%{_initrddir}/varnish
-install -D -m 0755 redhat/varnishlog.initrc %{buildroot}%{_initrddir}/varnishlog
-install -D -m 0755 redhat/varnishncsa.initrc %{buildroot}%{_initrddir}/varnishncsa
-%endif
-install -D -m 0755 redhat/varnish_reload_vcl %{buildroot}%{_sbindir}/varnish_reload_vcl
-
-echo %{_libdir}/varnish > %{buildroot}%{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
+%{__install} -D -m 0644 redhat/default.vcl %{buildroot}%{_sysconfdir}/varnish/default.vcl
+%{__install} -D -m 0644 redhat/varnish.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/varnish
+%{__install} -D -m 0644 redhat/varnish.logrotate %{buildroot}%{_sysconfdir}/logrotate.d/varnish
+%{__install} -D -m 0755 redhat/varnish.initrc %{buildroot}%{_initrddir}/varnish
+%{__install} -D -m 0755 redhat/varnishlog.initrc %{buildroot}%{_initrddir}/varnishlog
+%{__install} -D -m 0755 redhat/varnishncsa.initrc %{buildroot}%{_initrddir}/varnishncsa
+%{__install} -D -m 0755 redhat/varnish_reload_vcl %{buildroot}%{_sbindir}/varnish_reload_vcl
 
 %clean
 rm -rf %{buildroot}
@@ -204,35 +200,21 @@ rm -rf %{buildroot}
 %{_var}/lib/varnish
 %{_var}/log/varnish
 %{_mandir}/man1/*.1*
-%{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
-%doc LICENSE README redhat/README.redhat ChangeLog
+%doc INSTALL LICENSE README redhat/README.redhat ChangeLog
 %doc examples
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
-%config(noreplace) %{_sysconfdir}/logrotate.d/varnish
-
-# systemd from fedora 17
-%if 0%{?fedora} >= 17
-%{_unitdir}/varnish.service
-%{_unitdir}/varnishncsa.service
-%{_unitdir}/varnishlog.service
-%config(noreplace)%{_sysconfdir}/varnish/varnish.params
-
-# default is standard sysvinit
-%else
 %config(noreplace) %{_sysconfdir}/sysconfig/varnish
+%config(noreplace) %{_sysconfdir}/logrotate.d/varnish
 %{_initrddir}/varnish
 %{_initrddir}/varnishlog
 %{_initrddir}/varnishncsa
-%endif
 
 %files libs
 %defattr(-,root,root,-)
 %{_libdir}/*.so.*
-%{_libdir}/varnish
 %doc LICENSE
-%config %{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
 
 %files libs-devel
 %defattr(-,root,root,-)
@@ -264,42 +246,19 @@ getent passwd varnish >/dev/null || \
 exit 0
 
 %post
-%if 0%{?fedora} >= 17
-/bin/systemctl daemon-reload >/dev/null 2>&1 || :
-%else
 /sbin/chkconfig --add varnish
 /sbin/chkconfig --add varnishlog
 /sbin/chkconfig --add varnishncsa 
-%endif
 test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc/varnish/secret)
-
-%triggerun -- varnish < 3.0.2-1
-# Save the current service runlevel info
-# User must manually run systemd-sysv-convert --apply varnish 
-# to migrate them to systemd targets
-%{_bindir}/systemd-sysv-convert --save varnish >/dev/null 2>&1 ||:
-
-# If the package is allowed to autostart:
-#/bin/systemctl --no-reload enable varnish.service >/dev/null 2>&1 ||:
-
-# Run these because the SysV package being removed won't do them
-/sbin/chkconfig --del varnish >/dev/null 2>&1 || :
-#/bin/systemctl try-restart varnish.service >/dev/null 2>&1 || :
 
 %preun
 if [ $1 -lt 1 ]; then
-  # Package removal, not upgrade
-  %if 0%{?fedora} >= 17
-  /bin/systemctl --no-reload disable varnish.service > /dev/null 2>&1 || :
-  /bin/systemctl stop varnish.service > /dev/null 2>&1 || :
-  %else
   /sbin/service varnish stop > /dev/null 2>&1
   /sbin/service varnishlog stop > /dev/null 2>&1
   /sbin/service varnishncsa stop > /dev/null 2>%1
   /sbin/chkconfig --del varnish
   /sbin/chkconfig --del varnishlog
   /sbin/chkconfig --del varnishncsa 
-  %endif
 fi
 
 %post libs -p /sbin/ldconfig
@@ -307,27 +266,6 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
-* Tue Mar 06 2012 Ingvar Hagelund <ingvar@redpill-linpro.com> - 3.0.2-1
-- New upstream version 3.0.2
-- Removed INSTALL as requested by rpmlint
-- Added a ld.so.conf.d fragment file listing libdir/varnish 
-- Removed redundant doc/html/_sources
-- systemd support from fedora 17
-- Stopped using macros for make and install, according to 
-  Fedora's packaging guidelines
-- Changes merged from upstream:
-  - Added suse_version macro
-  - Added comments on building from a git checkout
-  - mkpasswd -> uuidgen for fewer dependencies
-  - Fixed missing quotes around cflags for pcre
-  - Removed unnecessary 32/64 bit parallell build hack as this is fixed upstream
-  - Fixed typo in configure call, disable -> without
-  - Added lib/libvgz/.libs to LD_LIBRARY_PATH in make check
-  - Added section 3 manpages
-  - Configure with --without-rst2man --without-rst2html
-  - changelog entries
-- Removed unnecessary patch for system jemalloc, upstream now supports this
-
 * Fri Feb 10 2012 Petr Pisar <ppisar@redhat.com> - 2.1.5-4
 - Rebuild against PCRE 8.30
 
