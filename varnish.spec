@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 3.0.3
-Release: 2%{?dist}
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -11,7 +11,6 @@ Source2: varnish.params
 Source3: varnishncsa.service
 Source4: varnishlog.service
 Patch1:  varnish.no_pcre_jit.patch
-Patch2:  varnish.fix_ppc64_upstream_bug_1194.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
@@ -90,8 +89,6 @@ Documentation files for %name
 %ifarch i386 i686 ppc
 %patch1
 %endif
-
-%patch2
 
 mkdir examples
 cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
@@ -307,9 +304,6 @@ fi
 %endif
 
 %changelog
-* Tue Sep 18 2012 Ingvar Hagelund <ingvar@redpill-linpro.com> - 3.0.3-2
-- Added a patch from phk, fixing upstream ppc64 bug #1194
-
 * Tue Aug 21 2012 Ingvar Hagelund <ingvar@redpill-linpro.com> - 3.0.3-1
 - New upstream release
 - Remove unneeded hacks for ppc
