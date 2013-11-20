@@ -1,13 +1,14 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.1.5
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
 
 Patch6: varnish.jemalloc_as_system_library.patch
+Patch7: varnish-2.1.5.fix_CVE-2013-4484.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -77,6 +78,7 @@ Documentation files for %name
 #%setup -q -n varnish-cache
 
 %patch6
+%patch7
 
 # Needs to regenerate configure after patching in jemalloc system lib support
 # Release tarballs would not need this
@@ -266,6 +268,9 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Wed Nov 20 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.5-5
+- Backported a patch for CVE-2013-4484, closes #1025129
+
 * Fri Feb 10 2012 Petr Pisar <ppisar@redhat.com> - 2.1.5-4
 - Rebuild against PCRE 8.30
 
