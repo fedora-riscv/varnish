@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.0.6
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -9,6 +9,8 @@ Source0: http://downloads.sourceforge.net/varnish/varnish-%{version}.tar.gz
 Patch0: varnish.varnishtest_debugflag.patch
 Patch1: varnish.changes-2.0.6.patch
 Patch2: varnish.fix_v00006.vtc.patch
+Patch3: varnish-2.0.6.fix_logrotate.patch
+Patch4: varnish-2.0.6.fix_CVE-2013-4484.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -73,6 +75,8 @@ Varnish is a high-performance HTTP accelerator
 %patch0
 %patch1
 %patch2
+%patch3
+%patch4
 
 # Hack to get 32- and 64-bits tests run concurrently on the same build machine
 case `uname -m` in
@@ -185,7 +189,7 @@ rm -rf %{buildroot}
 %{_sbindir}/*
 %{_bindir}/*
 %{_var}/lib/varnish
-%{_var}/log/varnish
+%dir %{_var}/log/varnish
 %{_mandir}/man1/*.1*
 %{_mandir}/man7/*.7*
 %doc INSTALL LICENSE README redhat/README.redhat ChangeLog 
@@ -253,6 +257,10 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Wed Nov 06 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.0.6-4
+- Added a patch to logrotate config, closes #554745
+- Backported a patch for CVE-2013-4484, closes #1025129
+
 * Tue Oct 26 2010 Ingvar Hagelund <ingvar@linpro.no> - 2.0.6-3
 - Build fixes for ppc
 - Added a patch for v00006.vtc that tames a malloc bonanza in some cases

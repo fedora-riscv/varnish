@@ -1,0 +1,13 @@
+diff -Naur ../varnish-2.0.6.orig/redhat/varnish.logrotate ./redhat/varnish.logrotate
+--- ../varnish-2.0.6.orig/redhat/varnish.logrotate	2008-10-16 07:43:07.000000000 +0200
++++ ./redhat/varnish.logrotate	2013-11-06 15:22:38.284992918 +0100
+@@ -3,7 +3,7 @@
+     notifempty
+     sharedscripts
+     postrotate
+-        /bin/kill -HUP `cat /var/run/varnish/varnishlog.pid 2>/dev/null` 2> /dev/null || true
+-	/bin/kill -HUP `cat /var/run/varnish/varnishncsa.pid 2>/dev/null` 2> /dev/null || true
++        /bin/kill -HUP `cat /var/run/varnishlog.pid 2>/dev/null` 2> /dev/null || true
++	/bin/kill -HUP `cat /var/run/varnishncsa.pid 2>/dev/null` 2> /dev/null || true
+     endscript
+ }
