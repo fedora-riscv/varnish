@@ -3,7 +3,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 3.0.4
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -13,6 +13,7 @@ Source2: varnish.params
 Source3: varnishncsa.service
 Source4: varnishlog.service
 Patch2:  varnish.fix_ppc64_upstream_bug_1194.patch
+Patch3:  varnish-3.0.4.fix_CVE-2013-4484.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
@@ -90,6 +91,7 @@ Documentation files for %name
 #%setup -q -n varnish-cache
 
 %patch2
+%patch3
 
 mkdir examples
 cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
@@ -177,7 +179,7 @@ rm -rf %{buildroot}
 %{_sbindir}/*
 %{_bindir}/*
 %{_var}/lib/varnish
-%{_var}/log/varnish
+%attr(0700,root,root) %dir %{_var}/log/varnish
 %{_mandir}/man1/*.1*
 %{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
@@ -306,6 +308,10 @@ fi
 %endif
 
 %changelog
+* Thu Nov 21 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> 3.0.4-2
+- Changed default mask for varnish log dir to 700, closing #915413 
+- Added a patch for CVE-2013-4484 from upstream, closing #1025128
+
 * Mon Aug 12 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> 3.0.4-1
 - New upstream release
 - Added libedit-devel to the build reqs
