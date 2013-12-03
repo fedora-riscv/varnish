@@ -2,8 +2,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 3.0.4
-Release: 2%{?dist}
+Version: 3.0.5
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -13,7 +13,6 @@ Source2: varnish.params
 Source3: varnishncsa.service
 Source4: varnishlog.service
 Patch2:  varnish.fix_ppc64_upstream_bug_1194.patch
-Patch3:  varnish-3.0.4.fix_CVE-2013-4484.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
@@ -91,7 +90,6 @@ Documentation files for %name
 #%setup -q -n varnish-cache
 
 %patch2
-%patch3
 
 mkdir examples
 cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
@@ -308,6 +306,10 @@ fi
 %endif
 
 %changelog
+* Tue Dec 03 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> 3.0.5-1
+- New upstream release
+- Dropped patch for CVE-2013-4484, as it's in upstream
+
 * Thu Nov 21 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> 3.0.4-2
 - Changed default mask for varnish log dir to 700, closing #915413 
 - Added a patch for CVE-2013-4484 from upstream, closing #1025128
