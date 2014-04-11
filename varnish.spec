@@ -1,23 +1,28 @@
 %global _hardened_build 1
-
+#% define v_rc beta1
+%define vd_rc %{?v_rc:-%{?v_rc}}
+%define    _use_internal_dependency_generator 0
+%define __find_provides %{_builddir}/varnish-%{version}%{?v_rc:-%{?v_rc}}/redhat/find-provides
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 3.0.5
-Release: 1%{?dist}
+Version: 4.0.0
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
-Source1: varnish.service
-Source2: varnish.params
-Source3: varnishncsa.service
-Source4: varnishlog.service
-Patch2:  varnish.fix_ppc64_upstream_bug_1194.patch
+#Source0: %{name}-%{version}%{?vd_rc}.tar.gz
+#Source0: %{name}-trunk.tar.gz
+#Source0: http://repo.varnish-cache.org/snapshots/%{name}-%{version}%{?vd_rc}.tar.gz
+Patch1:  varnish-4.0.0.fix_ld_library_path_in_sphinx_build.patch
+Patch2:  varnish-4.0.0_fix_Werror_el6.patch
+Patch3:  varnish-4.0.0.fix_default_thread_pool_stack.patch
+Patch4:  varnish-4.0.0-beta1.fixes_ppc64_upstream_bug_1469.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
 #BuildRequires: automake autoconf libtool python-docutils
-BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig jemalloc-devel libedit-devel
+BuildRequires: ncurses-devel groff pcre-devel pkgconfig python-docutils libedit-devel jemalloc-devel
 Requires: varnish-libs = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
@@ -53,6 +58,10 @@ Summary: Libraries for %{name}
 Group: System Environment/Libraries
 BuildRequires: ncurses-devel
 #Obsoletes: libvarnish1
+Provides: libvarnishapi.so.1(LIBVARNISHAPI_1.0)(64bit)
+Provides: libvarnishapi.so.1(LIBVARNISHAPI_1.1)(64bit)
+Provides: libvarnishapi.so.1(LIBVARNISHAPI_1.2)(64bit)
+Provides: libvarnishapi.so.1(LIBVARNISHAPI_1.3)(64bit)
 
 %description libs
 Libraries for %{name}.
@@ -86,36 +95,27 @@ Documentation files for %name
 #Varnish Cache is a high-performance HTTP accelerator
 
 %prep
-%setup -q
-#%setup -q -n varnish-cache
+%setup -q -n varnish-%{version}%{?vd_rc}
+#%setup -q -n varnish-trunk
 
-%patch2
-
-mkdir examples
-cp bin/varnishd/default.vcl etc/zope-plone.vcl examples
-
+%patch1 -p0
+%if 0%{?rhel} <= 6
+%patch2 -p0
+%endif
+%patch3 -p1
+%patch4 -p1
 %build
+#export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=0"
 
 # Remove "--disable static" if you want to build static libraries 
-%configure --disable-static --localstatedir=/var/lib
+%configure --disable-static --localstatedir=/var/lib --docdir=%{_docdir}/%{name}-%{version}/examples
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g;
         s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
-make %{?_smp_mflags}
-
-head -6 etc/default.vcl > redhat/default.vcl
-
-cat << EOF >> redhat/default.vcl
-backend default {
-  .host = "127.0.0.1";
-  .port = "80";
-}
-EOF
-
-tail -n +11 etc/default.vcl >> redhat/default.vcl
+make %{?_smp_mflags} V=1 
 
 %if 0%{?fedora}%{?rhel} != 0 && 0%{?rhel} <= 4 && 0%{?fedora} <= 8
         # Old style daemon function
@@ -125,17 +125,16 @@ tail -n +11 etc/default.vcl >> redhat/default.vcl
         redhat/varnish.initrc redhat/varnishlog.initrc redhat/varnishncsa.initrc
 %endif
 
-rm -rf doc/sphinx/\=build/html/_sources
-mv doc/sphinx/\=build/html doc
-rm -rf doc/sphinx/\=build
+rm -rf doc/sphinx/build/html/_sources
+mv doc/sphinx/build/html doc
+rm -rf doc/sphinx/build
 
 %check
-LD_LIBRARY_PATH="lib/libvarnish/.libs:lib/libvarnishcompat/.libs:lib/libvarnishapi/.libs:lib/libvcl/.libs:lib/libvgz/.libs" bin/varnishd/varnishd -b 127.0.0.1:80 -C -n /tmp/foo
-make check LD_LIBRARY_PATH="../../lib/libvarnish/.libs:../../lib/libvarnishcompat/.libs:../../lib/libvarnishapi/.libs:../../lib/libvcl/.libs:../../lib/libvgz/.libs"
+make check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
 
 %install
 rm -rf %{buildroot}
-make install DESTDIR=%{buildroot} INSTALL="install -p"
+make install DESTDIR=%{buildroot} INSTALL="install -p" 
 
 # None of these for fedora
 find %{buildroot}/%{_libdir}/ -name '*.la' -exec rm -f {} ';'
@@ -147,16 +146,16 @@ mkdir -p %{buildroot}/var/lib/varnish
 mkdir -p %{buildroot}/var/log/varnish
 mkdir -p %{buildroot}/var/run/varnish
 mkdir -p %{buildroot}%{_sysconfdir}/ld.so.conf.d/
-install -D -m 0644 redhat/default.vcl %{buildroot}%{_sysconfdir}/varnish/default.vcl
+install -D -m 0644 etc/example.vcl %{buildroot}%{_sysconfdir}/varnish/default.vcl
 install -D -m 0644 redhat/varnish.logrotate %{buildroot}%{_sysconfdir}/logrotate.d/varnish
 
 # systemd support
 %if 0%{?fedora} >= 17
 mkdir -p %{buildroot}%{_unitdir}
-install -D -m 0644 %SOURCE1 %{buildroot}%{_unitdir}/varnish.service
-install -D -m 0644 %SOURCE2 %{buildroot}%{_sysconfdir}/varnish/varnish.params
-install -D -m 0644 %SOURCE3 %{buildroot}%{_unitdir}/varnishncsa.service
-install -D -m 0644 %SOURCE4 %{buildroot}%{_unitdir}/varnishlog.service
+install -D -m 0644 redhat/varnish.service %{buildroot}%{_unitdir}/varnish.service
+install -D -m 0644 redhat/varnish.params %{buildroot}%{_sysconfdir}/varnish/varnish.params
+install -D -m 0644 redhat/varnishncsa.service %{buildroot}%{_unitdir}/varnishncsa.service
+install -D -m 0644 redhat/varnishlog.service %{buildroot}%{_unitdir}/varnishlog.service
 sed -i 's,sysconfig/varnish,varnish/varnish.params,' redhat/varnish_reload_vcl
 # default is standard sysvinit
 %else
@@ -182,7 +181,7 @@ rm -rf %{buildroot}
 %{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
 %doc LICENSE README redhat/README.redhat ChangeLog
-%doc examples
+#% doc etc
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
 %config(noreplace) %{_sysconfdir}/logrotate.d/varnish
@@ -215,6 +214,9 @@ rm -rf %{buildroot}
 %dir %{_includedir}/varnish
 %{_includedir}/varnish/*
 %{_libdir}/pkgconfig/varnishapi.pc
+/usr/share/varnish
+/usr/share/aclocal
+
 %doc LICENSE
 
 %files docs
@@ -228,14 +230,14 @@ rm -rf %{buildroot}
 #%{_libdir}/libvarnish.a
 #%{_libdir}/libvarnishapi.a
 #%{_libdir}/libvarnishcompat.a
-#%{_libdir}/libvcl.a
+#%{_libdir}/libvcc.a
 #%doc LICENSE
 
 %pre
 getent group varnish >/dev/null || groupadd -r varnish
 getent passwd varnish >/dev/null || \
-        useradd -r -g varnish -d /var/lib/varnish -s /sbin/nologin \
-                -c "Varnish Cache" varnish
+       useradd -r -g varnish -d /var/lib/varnish -s /sbin/nologin \
+               -c "Varnish Cache" varnish
 exit 0
 
 %post
@@ -282,8 +284,8 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 %else
 
 if [ $1 -lt 1 ]; then
-# Package removal, not upgrade
-  %if 0%{?fedora} == 17
+  # Package removal, not upgrade
+  %if 0%{?fedora} >= 17
   /bin/systemctl --no-reload disable varnish.service > /dev/null 2>&1 || :
   /bin/systemctl stop varnish.service > /dev/null 2>&1 || :
   %else
@@ -306,6 +308,27 @@ fi
 %endif
 
 %changelog
+* Fri Apr 11 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.0-1
+- New upstream release
+
+* Tue Apr 01 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.0-0.4.beta1
+- New upstream beta release
+- Added a few patches from upstream for building on ppc
+
+* Wed Mar 12 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.0-0.3.tp2+20140327
+- Daily snapshot build
+
+* Wed Mar 12 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.0-0.2.tp2+20140306
+- First try on wrapping 4.0.0-tp2+ daily snapshot series
+- Added the rc and __find_provides macros from upstream
+- Added LD_LIBRARY_PATH fix for varnishd-to-sphinx doc thing
+- Changed LD_LIBRARY_PATH for make check to something more readable
+- etc/zope-plone.vcl is gone. example.vcl replaces default.vcl as example vcl doc
+- Now using example.vcl for /etc/varnish/default.vcl
+- Added docdir to configure call, to get example docs in the right place
+- Systemd scripts are now upstream
+- Added some explicit provides not found automatically
+
 * Tue Dec 03 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> 3.0.5-1
 - New upstream release
 - Dropped patch for CVE-2013-4484, as it's in upstream
