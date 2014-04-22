@@ -125,7 +125,7 @@ mv doc/sphinx/build/html doc
 rm -rf doc/sphinx/build
 
 %check
-#make check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
+make check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
 
 %install
 rm -rf %{buildroot}
