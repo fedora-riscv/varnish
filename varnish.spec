@@ -6,7 +6,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.0
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -16,8 +16,6 @@ Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
 #Source0: http://repo.varnish-cache.org/snapshots/%{name}-%{version}%{?vd_rc}.tar.gz
 Patch1:  varnish-4.0.0.fix_ld_library_path_in_sphinx_build.patch
 Patch2:  varnish-4.0.0_fix_Werror_el6.patch
-Patch3:  varnish-4.0.0.fix_default_thread_pool_stack.patch
-Patch4:  varnish-4.0.0-beta1.fixes_ppc64_upstream_bug_1469.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
@@ -102,13 +100,12 @@ Documentation files for %name
 %if 0%{?rhel} <= 6
 %patch2 -p0
 %endif
-%patch3 -p1
-%patch4 -p1
+
 %build
 #export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=0"
 
 # Remove "--disable static" if you want to build static libraries 
-%configure --disable-static --localstatedir=/var/lib --docdir=%{_docdir}/%{name}-%{version}/examples
+%configure --disable-static --localstatedir=/var/lib --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
@@ -308,12 +305,17 @@ fi
 %endif
 
 %changelog
+* Tue Apr 22 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.0-2
+- Use _pkgdocdir macro on fedora
+
 * Fri Apr 11 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.0-1
 - New upstream release
+- Updated patches to match new release
+- Dropped patches included upstream
 
 * Tue Apr 01 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.0-0.4.beta1
 - New upstream beta release
-- Added a few patches from upstream for building on ppc
+- Added a few patches from upstream git for building on ppc
 
 * Wed Mar 12 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.0-0.3.tp2+20140327
 - Daily snapshot build
