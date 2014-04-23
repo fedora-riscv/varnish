@@ -209,6 +209,7 @@ rm -rf %{buildroot}
 %{_includedir}/varnish
 %{_libdir}/pkgconfig/varnishapi.pc
 /usr/share/varnish
+/usr/share/aclocal/varnish.m4
 
 %doc LICENSE
 
@@ -306,6 +307,7 @@ fi
   from upstream
 - Added _isa macro to the libs dependency and updated Group definitions to
   more modern tags, closes bz 1090196
+- Added aclocal macros to libs-devel sub package
 
 * Tue Apr 22 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.0-2
 - Use _pkgdocdir macro on fedora
