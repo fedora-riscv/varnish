@@ -300,10 +300,10 @@ fi
 %endif
 
 %changelog
-* Wed Jul 30 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.1-1
-- New upstream release
-- systemd support for rhel7
-- Dropped patches included upstream
+* Wed Jul 30 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.1-1 
+- New upstream release 
+- systemd support for rhel7 
+- Dropped patches included upstream 
 
 * Sun Jun 08 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 4.0.0-3.1
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
