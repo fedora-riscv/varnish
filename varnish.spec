@@ -6,7 +6,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.0
-Release: 3%{?v_rc}%{?dist}.1
+Release: 4%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -36,7 +36,7 @@ Requires(preun): /sbin/service
 %if %{undefined suse_version}
 Requires(preun): initscripts
 %endif
-%if 0%{?fedora} >= 17
+%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 Requires(post): systemd-units
 Requires(post): systemd-sysv
 Requires(preun): systemd-units
@@ -145,7 +145,7 @@ install -D -m 0644 etc/example.vcl %{buildroot}%{_sysconfdir}/varnish/default.vc
 install -D -m 0644 redhat/varnish.logrotate %{buildroot}%{_sysconfdir}/logrotate.d/varnish
 
 # systemd support
-%if 0%{?fedora} >= 17
+%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 mkdir -p %{buildroot}%{_unitdir}
 install -D -m 0644 redhat/varnish.service %{buildroot}%{_unitdir}/varnish.service
 install -D -m 0644 redhat/varnish.params %{buildroot}%{_sysconfdir}/varnish/varnish.params
@@ -182,7 +182,7 @@ rm -rf %{buildroot}
 %config(noreplace) %{_sysconfdir}/logrotate.d/varnish
 
 # systemd from fedora 17
-%if 0%{?fedora} >= 17
+%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 %{_unitdir}/varnish.service
 %{_unitdir}/varnishncsa.service
 %{_unitdir}/varnishlog.service
@@ -235,7 +235,7 @@ getent passwd varnish >/dev/null || \
 exit 0
 
 %post
-%if 0%{?fedora} >= 17
+%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 
 # Fedora 17
 %if 0%{?fedora} == 17
@@ -244,7 +244,7 @@ if [ $1 -eq 1 ] ; then
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 
-# Fedora 18+
+# Fedora 18+, rhel7+
 %else
 %systemd_post varnish.service
 %endif
@@ -273,7 +273,7 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 %preun
 
-%if 0%{?fedora} >= 18
+%if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
 %systemd_preun varnish.service
 %else
 
@@ -297,11 +297,14 @@ fi
 
 %postun libs 
 /sbin/ldconfig
-%if 0%{?fedora} >= 18
+%if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
 %systemd_postun_with_restart varnish.service
 %endif
 
 %changelog
+* Wed Jul 30 2014 Ingvar Hagelnd <ingvar@redpill-linpro.com> 4.0.0-4
+- systemd support for rhel7
+
 * Sun Jun 08 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 4.0.0-3.1
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
