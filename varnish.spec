@@ -5,8 +5,8 @@
 %define __find_provides %{_builddir}/%{name}-%{version}%{?v_rc:-%{?v_rc}}/redhat/find-provides
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.0.0
-Release: 4%{?v_rc}%{?dist}
+Version: 4.0.1
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -16,7 +16,6 @@ Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
 #Source0: http://repo.varnish-cache.org/snapshots/%{name}-%{version}%{?vd_rc}.tar.gz
 Patch1:  varnish-4.0.0.fix_ld_library_path_in_sphinx_build.patch
 Patch2:  varnish-4.0.0_fix_Werror_el6.patch
-Patch3:  varnish-4.0.0.fix_find_provides.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
@@ -94,10 +93,9 @@ Documentation files for %name
 #%setup -q -n varnish-trunk
 
 %patch1 -p0
-%if 0%{?rhel} <= 6
+%if 0%{?rhel} <= 6 && 0%{?fedora} <= 12
 %patch2 -p0
 %endif
-%patch3 -p0
 
 %build
 #export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=0"
@@ -302,8 +300,10 @@ fi
 %endif
 
 %changelog
-* Wed Jul 30 2014 Ingvar Hagelnd <ingvar@redpill-linpro.com> 4.0.0-4
+* Wed Jul 30 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.1-1
+- New upstream release
 - systemd support for rhel7
+- Dropped patches included upstream
 
 * Sun Jun 08 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 4.0.0-3.1
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
