@@ -6,7 +6,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.1
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -15,7 +15,7 @@ Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
 #Source0: %{name}-trunk.tar.gz
 #Source0: http://repo.varnish-cache.org/snapshots/%{name}-%{version}%{?vd_rc}.tar.gz
 Patch1:  varnish-4.0.0.fix_ld_library_path_in_sphinx_build.patch
-Patch2:  varnish-4.0.0_fix_Werror_el6.patch
+Patch2:  varnish-4.0.1_fix_Werror_el6.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
@@ -300,6 +300,9 @@ fi
 %endif
 
 %changelog
+* Wed Jul 30 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.1-2
+- Rebased patch for el6
+
 * Wed Jul 30 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.1-1 
 - New upstream release 
 - systemd support for rhel7 
