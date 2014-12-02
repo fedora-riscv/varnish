@@ -2,7 +2,7 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 3.0.5
+Version: 3.0.6
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -17,7 +17,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
 #BuildRequires: automake autoconf libtool python-docutils
-BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig jemalloc-devel libedit-devel
+BuildRequires: ncurses-devel libxslt groff pcre-devel pkgconfig jemalloc-devel libedit-devel python
 Requires: varnish-libs = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
@@ -306,6 +306,10 @@ fi
 %endif
 
 %changelog
+* Tue Dec 02 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 3.0.6-1
+- New upstream release
+- Added python to BuildRequires - it's needed for mock builds on f19
+
 * Tue Dec 03 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> 3.0.5-1
 - New upstream release
 - Dropped patch for CVE-2013-4484, as it's in upstream
