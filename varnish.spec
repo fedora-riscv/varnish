@@ -5,7 +5,7 @@
 %define __find_provides %{_builddir}/%{name}-%{version}%{?v_rc:-%{?v_rc}}/redhat/find-provides
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.0.2
+Version: 4.0.3
 Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -15,8 +15,8 @@ Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
 #Source0: %{name}-trunk.tar.gz
 #Source0: http://repo.varnish-cache.org/snapshots/%{name}-%{version}%{?vd_rc}.tar.gz
 Patch1:  varnish-4.0.2.fix_ld_library_path_in_sphinx_build.patch
-Patch2:  varnish-4.0.1_fix_Werror_el6.patch
-Patch3:  varnish-4.0.2-systemd_service_fixes.patch
+Patch2:  varnish-4.0.3_fix_Werror_el6.patch
+Patch3:  varnish-4.0.3_fix_python24.el5.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
@@ -97,13 +97,20 @@ Documentation files for %name
 %if 0%{?rhel} <= 6 && 0%{?fedora} <= 12
 %patch2 -p0
 %endif
-%patch3 -p1
+%if 0%{?rhel} <= 5 && 0%{?fedora} <= 12
+%patch3 -p0
+%endif
 
 %build
 #export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=0"
 
 # Remove "--disable static" if you want to build static libraries 
-%configure --disable-static --localstatedir=/var/lib --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
+%configure --disable-static \
+%if 0%{?rhel} <= 5 && 0%{?fedora} <= 12
+  --with-rst2man=/bin/true  \
+%endif
+  --localstatedir=/var/lib  \
+  --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
@@ -279,7 +286,7 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 if [ $1 -lt 1 ]; then
   # Package removal, not upgrade
-  %if 0%{?fedora} >= 17
+  %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
   /bin/systemctl --no-reload disable varnish.service > /dev/null 2>&1 || :
   /bin/systemctl stop varnish.service > /dev/null 2>&1 || :
   %else
@@ -302,6 +309,12 @@ fi
 %endif
 
 %changelog
+* Thu Mar 05 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-1
+- New upstream release
+- Removed systemd patch included upstream
+- Rebased trivial Werr-patch for varnish-4.0.3
+- Added patch to build on el5
+
 * Tue Nov 25 2014 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.2-1
 - New upstream release
 - Rebased sphinx makefile patch
