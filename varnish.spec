@@ -6,7 +6,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.3
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -17,11 +17,15 @@ Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
 Patch1:  varnish-4.0.2.fix_ld_library_path_in_sphinx_build.patch
 Patch2:  varnish-4.0.3_fix_Werror_el6.patch
 Patch3:  varnish-4.0.3_fix_python24.el5.patch
+Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
 #BuildRequires: automake autoconf libtool python-docutils
 BuildRequires: ncurses-devel groff pcre-devel pkgconfig python-docutils libedit-devel jemalloc-devel
+%if 0%{?rhel} == 6
+BuildRequires: selinux-policy
+%endif
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
@@ -42,6 +46,12 @@ Requires(post): systemd-sysv
 Requires(preun): systemd-units
 Requires(postun): systemd-units
 BuildRequires: systemd-units
+%endif
+%if 0%{?rhel} == 6
+Requires: %{name}-selinux
+Requires(post): policycoreutils, 
+Requires(preun): policycoreutils
+Requires(postun): policycoreutils
 %endif
 
 # Varnish actually needs gcc installed to work. It uses the C compiler 
@@ -89,6 +99,15 @@ Documentation files for %name
 #Files for static linking of varnish library functions
 #Varnish Cache is a high-performance HTTP accelerator
 
+%if 0%{?rhel} == 6
+%package selinux
+Summary: Minimal selinux policy for running varnish4
+Group:   System Environment/Daemons
+
+%description selinux
+Minimal selinux policy for running varnish4
+%endif
+
 %prep
 %setup -q -n varnish-%{version}%{?vd_rc}
 #%setup -q -n varnish-trunk
@@ -99,6 +118,9 @@ Documentation files for %name
 %endif
 %if 0%{?rhel} <= 5 && 0%{?fedora} <= 12
 %patch3 -p0
+%endif
+%if 0%{?rhel} == 6
+%patch4 -p0
 %endif
 
 %build
@@ -170,6 +192,13 @@ install -D -m 0755 redhat/varnish_reload_vcl %{buildroot}%{_sbindir}/varnish_rel
 
 echo %{_libdir}/varnish > %{buildroot}%{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
 
+# selinux module for el6
+%if 0%{?rhel} == 6
+cd selinux
+make -f %{_datadir}/selinux/devel/Makefile
+install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name}/varnish4.pp
+%endif
+
 %clean
 rm -rf %{buildroot}
 
@@ -215,8 +244,8 @@ rm -rf %{buildroot}
 %{_libdir}/lib*.so
 %{_includedir}/varnish
 %{_libdir}/pkgconfig/varnishapi.pc
-/usr/share/varnish
-/usr/share/aclocal/varnish.m4
+%{_datadir}/%{name}
+%{_datadir}/aclocal/varnish.m4
 
 %doc LICENSE
 
@@ -233,6 +262,12 @@ rm -rf %{buildroot}
 #%{_libdir}/libvarnishcompat.a
 #%{_libdir}/libvcc.a
 #%doc LICENSE
+
+%if 0%{?rhel} == 6
+%files selinux
+%defattr(-,root,root,-)
+%{_datadir}/selinux/packages/%{name}/varnish4.pp
+%endif
 
 %pre
 getent group varnish >/dev/null || groupadd -r varnish
@@ -278,6 +313,25 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 /sbin/chkconfig --del varnish >/dev/null 2>&1 || :
 #/bin/systemctl try-restart varnish.service >/dev/null 2>&1 || :
 
+# selinux module for el6
+%if 0%{?rhel} == 6
+%post selinux
+if [ "$1" -le "1" ] ; then # First install
+semodule -i %{_datadir}/selinux/packages/%{name}/varnish4.pp 2>/dev/null || :
+fi
+
+%preun selinux
+if [ "$1" -lt "1" ] ; then # Final removal
+semodule -r varnish4 2>/dev/null || :
+fi
+
+%postun selinux
+if [ "$1" -ge "1" ] ; then # Upgrade
+semodule -i %{_datadir}/selinux/packages/%{name}/varnish4.pp 2>/dev/null || :
+fi
+
+%endif
+
 %preun
 
 %if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
@@ -309,6 +363,9 @@ fi
 %endif
 
 %changelog
+* Fri Mar 06 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-2
+- Added selinux module for varnish4 on el6
+
 * Thu Mar 05 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-1
 - New upstream release
 - Removed systemd patch included upstream
