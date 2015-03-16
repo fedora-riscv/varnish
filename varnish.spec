@@ -6,7 +6,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.3
-Release: 2%{?v_rc}%{?dist}
+Release: 3%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -18,6 +18,7 @@ Patch1:  varnish-4.0.2.fix_ld_library_path_in_sphinx_build.patch
 Patch2:  varnish-4.0.3_fix_Werror_el6.patch
 Patch3:  varnish-4.0.3_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
+Patch5:  varnish-4.0.3_fix_content_length_bug.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
@@ -122,6 +123,7 @@ Minimal selinux policy for running varnish4
 %if 0%{?rhel} == 6
 %patch4 -p0
 %endif
+%patch5 -p1
 
 %build
 #export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=0"
@@ -363,6 +365,10 @@ fi
 %endif
 
 %changelog
+* Fri Mar 13 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-3
+- Added a patch fixing a crash on bogus content-length header,
+  closing #1200034
+
 * Fri Mar 06 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-2
 - Added selinux module for varnish4 on el6
 
