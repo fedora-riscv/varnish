@@ -6,7 +6,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.3
-Release: 3%{?v_rc}%{?dist}
+Release: 4%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -78,6 +78,7 @@ Summary: Development files for %{name}-libs
 Group: Development/Libraries
 BuildRequires: ncurses-devel
 Requires: varnish-libs = %{version}-%{release}
+Requires: python
 
 %description libs-devel
 Development files for %{name}-libs
@@ -365,6 +366,9 @@ fi
 %endif
 
 %changelog
+* Wed May 27 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-4
+- libs-devel package now requires python, closing #1225243
+
 * Fri Mar 13 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-3
 - Added a patch fixing a crash on bogus content-length header,
   closing #1200034
