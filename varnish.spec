@@ -6,7 +6,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.3
-Release: 4%{?v_rc}%{?dist}.1
+Release: 5%{?v_rc}%{?dist}.1
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -215,7 +215,7 @@ rm -rf %{buildroot}
 %{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
 %doc LICENSE README redhat/README.redhat ChangeLog
-#% doc etc
+%doc etc/builtin.vcl etc/example.vcl
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
 %config(noreplace) %{_sysconfdir}/logrotate.d/varnish
@@ -366,6 +366,11 @@ fi
 %endif
 
 %changelog
+* Fri Aug 21 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-5
+- Added example vcl files explicitly. They are installed by make, but
+  have been removed by the cleaning of docroot in older rpmbuild. This makes
+  varnish build again in rawhide
+
 * Fri Jun 19 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 4.0.3-4.1
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
 
