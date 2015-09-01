@@ -6,7 +6,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.3
-Release: 5%{?v_rc}%{?dist}.1
+Release: 6%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -366,6 +366,9 @@ fi
 %endif
 
 %changelog
+* Tue Sep 01 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-6
+- Rebuilt for jemalloc-4.0.0
+
 * Fri Aug 21 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-5
 - Added example vcl files explicitly. They are installed by make, but
   have been removed by the cleaning of docroot in older rpmbuild. This makes
