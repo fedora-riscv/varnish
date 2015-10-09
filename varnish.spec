@@ -1,29 +1,52 @@
 %global _hardened_build 1
-#% define v_rc beta1
+%define XXv_rc beta1
 %define vd_rc %{?v_rc:-%{?v_rc}}
 %define    _use_internal_dependency_generator 0
 %define __find_provides %{_builddir}/%{name}-%{version}%{?v_rc:-%{?v_rc}}/redhat/find-provides
+
+# Package scripts are now external
+# https://github.com/varnish/varnish-cache-redhat
+%define commit1 f3dbcce7ac81165af2d4796ec222e10adfb11544
+%global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
+
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.0.3
-Release: 6%{?v_rc}%{?dist}
+Version: 4.1.0
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
-Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
-#Source0: %{name}-%{version}%{?vd_rc}.tar.gz
-#Source0: %{name}-trunk.tar.gz
-#Source0: http://repo.varnish-cache.org/snapshots/%{name}-%{version}%{?vd_rc}.tar.gz
-Patch1:  varnish-4.0.2.fix_ld_library_path_in_sphinx_build.patch
+Source0: http://repo.varnish-cache.org/source/%{name}-%{version}%{?vd_rc}.tar.gz
+Source1: http://github.com/varnish/varnish-cache-redhat/archive/%{commit1}.tar.gz#/varnish-cache-redhat-%{shortcommit1}.tar.gz
+Patch1:  varnish-4.1.0.fix_ld_library_path_in_sphinx_build.patch
 Patch2:  varnish-4.0.3_fix_Werror_el6.patch
 Patch3:  varnish-4.0.3_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
-Patch5:  varnish-4.0.3_fix_content_length_bug.patch
+Patch6:  varnish-4.1.0.fix_find-provides.patch
+Patch7:  varnish-4.1.0.fix_dns_test_corner_case_v00017.patch
+Patch8:  varnish-4.1.0.adjust_pcre_test_r01576.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
 # To build from git, start with a make dist, see redhat/README.redhat 
 # You will need at least automake autoconf libtool python-docutils
-#BuildRequires: automake autoconf libtool python-docutils
-BuildRequires: ncurses-devel groff pcre-devel pkgconfig python-docutils libedit-devel jemalloc-devel
+#BuildRequires: automake
+#BuildRequires: autoconf
+#BuildRequires: libtool
+#BuildRequires: graphviz
+
+%if 0%{?rhel} > 5
+BuildRequires: python-sphinx
+%endif
+BuildRequires: python-docutils
+BuildRequires: ncurses-devel
+BuildRequires: groff
+BuildRequires: pcre-devel
+BuildRequires: pkgconfig
+BuildRequires: libedit-devel
+BuildRequires: jemalloc-devel
+BuildRequires: gcc
+BuildRequires: make
+
 %if 0%{?rhel} == 6
 BuildRequires: selinux-policy
 %endif
@@ -37,7 +60,6 @@ Requires(pre): shadow-utils
 Requires(post): /sbin/chkconfig, /usr/bin/uuidgen
 Requires(preun): /sbin/chkconfig
 Requires(preun): /sbin/service
-#Provides: varnishabi-4.0.0-2acedeb
 %if %{undefined suse_version}
 Requires(preun): initscripts
 %endif
@@ -61,8 +83,14 @@ Requires: gcc
 
 %description
 This is Varnish Cache, a high-performance HTTP accelerator.
-Documentation wiki and additional information about Varnish is
-available on the following web site: http://www.varnish-cache.org/
+
+Varnish Cache stores web pages in memory so web servers don\'t have to
+create the same web page over and over again. Varnish Cache serves
+pages much faster than any application server; giving the website a
+significant speed up.
+
+Documentation wiki and additional information about Varnish Cache is
+available on the following web site: https://www.varnish-cache.org/
 
 %package libs
 Summary: Libraries for %{name}
@@ -112,8 +140,8 @@ Minimal selinux policy for running varnish4
 
 %prep
 %setup -q -n varnish-%{version}%{?vd_rc}
-#%setup -q -n varnish-trunk
-
+tar xvzf %SOURCE1
+ln -s varnish-cache-redhat-%{commit1} redhat
 %patch1 -p0
 %if 0%{?rhel} <= 6 && 0%{?fedora} <= 12
 %patch2 -p0
@@ -124,12 +152,17 @@ Minimal selinux policy for running varnish4
 %if 0%{?rhel} == 6
 %patch4 -p0
 %endif
-%patch5 -p1
+%patch6 -p0
+%patch7 -p0
+%patch8 -p0
 
 %build
-#export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=0"
+%if 0%{?rhel} == 6
+export CFLAGS="%{optflags} -fPIC"
+export LDFLAGS=" -pie"
+%endif
 
-# Remove "--disable static" if you want to build static libraries 
+# Remove "--disable static" if you want to build static libraries
 %configure --disable-static \
 %if 0%{?rhel} <= 5 && 0%{?fedora} <= 12
   --with-rst2man=/bin/true  \
@@ -153,11 +186,14 @@ make %{?_smp_mflags} V=1
 %endif
 
 rm -rf doc/sphinx/build/html/_sources
-mv doc/sphinx/build/html doc
 rm -rf doc/sphinx/build
+sed -i "s,\${RPM_BUILD_ROOT}/../../BUILD/varnish\*,%{buildroot}%{_includedir}/%{name}," redhat/find-provides
 
 %check
-make check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
+%ifarch ppc ppc64
+rm bin/varnishtest/tests/u00000.vtc
+%endif
+make -j16 check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -175,6 +211,8 @@ mkdir -p %{buildroot}/var/run/varnish
 mkdir -p %{buildroot}%{_sysconfdir}/ld.so.conf.d/
 install -D -m 0644 etc/example.vcl %{buildroot}%{_sysconfdir}/varnish/default.vcl
 install -D -m 0644 redhat/varnish.logrotate %{buildroot}%{_sysconfdir}/logrotate.d/varnish
+install -D -m 0644 include/vcs_version.h %{buildroot}%{_includedir}/varnish
+install -D -m 0644 include/vrt.h %{buildroot}%{_includedir}/varnish
 
 # systemd support
 %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
@@ -214,7 +252,7 @@ rm -rf %{buildroot}
 %{_mandir}/man1/*.1*
 %{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
-%doc LICENSE README redhat/README.redhat ChangeLog
+%doc LICENSE README redhat/README.rst ChangeLog
 %doc etc/builtin.vcl etc/example.vcl
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
@@ -256,8 +294,10 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %doc LICENSE
 %doc doc/sphinx
+%if 0%{?rhel} > 5 || 0%{?fedora} > 12
 %doc doc/html
 %doc doc/changes*.html
+%endif
 
 #%files libs-static
 #%{_libdir}/libvarnish.a
@@ -366,8 +406,31 @@ fi
 %endif
 
 %changelog
+* Fri Oct 09 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.0-1
+- New upstream release 4.1.0
+- Changed buildreqs list to be one per line
+- Skipped patches included upstream
+- Rebased sphinx build patch
+- Changed description to match upstream
+- Added basic buildreqs gcc and make
+- Included vcs_version.h and vrt.h to produce correct provides, even 
+  when building in a non-standard buildroot
+- Patched local find_provides similarily
+- Added a couple of patches that adjusts test values for the koji 
+  i686 and ppc64 build servers
+- Added -fPIC and -pie for el6 rebuilds
+- redhat subdir is now fetched from new upstream gitrepo
+
 * Tue Sep 01 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-6
 - Rebuilt for jemalloc-4.0.0
+
+* Wed Aug 26 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.0-0.1.tp1
+- Added patch for varnish unix-jail, instead of old-style -u user
+
+* Fri Aug 21 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.0-0.0.tp1
+- New upstream tech preview release
+- Removed patches included upstream
+- Prebuild html docs now placed in doc dir already
 
 * Fri Aug 21 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-5
 - Added example vcl files explicitly. They are installed by make, but
