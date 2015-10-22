@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.1.0
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -252,7 +252,12 @@ rm -rf %{buildroot}
 %{_mandir}/man1/*.1*
 %{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
-%doc LICENSE README redhat/README.rst ChangeLog
+%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
+%license LICENSE
+%else
+%doc LICENSE
+%endif
+%doc README redhat/README.rst ChangeLog
 %doc etc/builtin.vcl etc/example.vcl
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
@@ -406,6 +411,9 @@ fi
 %endif
 
 %changelog
+* Thu Oct 21 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.0-2
+- Moved LICENSE to license catalog for fedora and el7
+
 * Fri Oct 09 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.0-1
 - New upstream release 4.1.0
 - Changed buildreqs list to be one per line
