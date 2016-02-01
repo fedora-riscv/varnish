@@ -5,26 +5,24 @@
 %define __find_provides %{_builddir}/%{name}-%{version}%{?v_rc:-%{?v_rc}}/redhat/find-provides
 
 # Package scripts are now external
-# https://github.com/varnish/varnish-cache-redhat
-%define commit1 f3dbcce7ac81165af2d4796ec222e10adfb11544
+# https://github.com/varnishcache/pkg-varnish-cache
+%define commit1 105f20b89664f081c216d6e2c168cb8a6c090089
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.1.0
-Release: 2%{?v_rc}%{?dist}
+Version: 4.1.1
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://repo.varnish-cache.org/source/%{name}-%{version}%{?vd_rc}.tar.gz
-Source1: http://github.com/varnish/varnish-cache-redhat/archive/%{commit1}.tar.gz#/varnish-cache-redhat-%{shortcommit1}.tar.gz
-Patch1:  varnish-4.1.0.fix_ld_library_path_in_sphinx_build.patch
+Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
+Patch1:  varnish-4.1.1.fix_ld_library_path_in_sphinx_build.patch
 Patch2:  varnish-4.0.3_fix_Werror_el6.patch
 Patch3:  varnish-4.0.3_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
-Patch7:  varnish-4.1.0.fix_dns_test_corner_case_v00017.patch
-Patch8:  varnish-4.1.0.adjust_pcre_test_r01576.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # To build from git, start with a make dist, see redhat/README.redhat 
@@ -84,7 +82,7 @@ Requires: gcc
 %description
 This is Varnish Cache, a high-performance HTTP accelerator.
 
-Varnish Cache stores web pages in memory so web servers don\'t have to
+Varnish Cache stores web pages in memory so web servers don't have to
 create the same web page over and over again. Varnish Cache serves
 pages much faster than any application server; giving the website a
 significant speed up.
@@ -94,7 +92,7 @@ available on the following web site: https://www.varnish-cache.org/
 
 %package libs
 Summary: Libraries for %{name}
-Group: Development/Libraries
+Group: System Environment/Libraries
 BuildRequires: ncurses-devel
 #Obsoletes: libvarnish1
 %description libs
@@ -141,7 +139,7 @@ Minimal selinux policy for running varnish4
 %prep
 %setup -q -n varnish-%{version}%{?vd_rc}
 tar xvzf %SOURCE1
-ln -s varnish-cache-redhat-%{commit1} redhat
+ln -s pkg-varnish-cache-%{commit1}/redhat redhat
 %patch1 -p0
 %if 0%{?rhel} <= 6 && 0%{?fedora} <= 12
 %patch2 -p0
@@ -153,8 +151,6 @@ ln -s varnish-cache-redhat-%{commit1} redhat
 %patch4 -p0
 %endif
 %patch6 -p0
-%patch7 -p0
-%patch8 -p0
 
 %build
 %if 0%{?rhel} == 6
@@ -257,7 +253,7 @@ rm -rf %{buildroot}
 %else
 %doc LICENSE
 %endif
-%doc README redhat/README.rst ChangeLog
+%doc README ChangeLog
 %doc etc/builtin.vcl etc/example.vcl
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
@@ -288,10 +284,10 @@ rm -rf %{buildroot}
 %files libs-devel
 %defattr(-,root,root,-)
 %{_libdir}/lib*.so
-%{_includedir}/varnish
+%{_includedir}/%{name}
 %{_libdir}/pkgconfig/varnishapi.pc
 %{_datadir}/%{name}
-%{_datadir}/aclocal/varnish.m4
+%{_datadir}/aclocal/%{name}.m4
 
 %doc LICENSE
 
@@ -326,18 +322,7 @@ exit 0
 
 %post
 %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
-
-# Fedora 17
-%if 0%{?fedora} == 17
-# Initial installation
-if [ $1 -eq 1 ] ; then
-/bin/systemctl daemon-reload >/dev/null 2>&1 || :
-fi
-
-# Fedora 18+, rhel7+
-%else
 %systemd_post varnish.service
-%endif
 
 # Other distros: Use chkconfig
 %else
@@ -391,6 +376,8 @@ if [ $1 -lt 1 ]; then
   %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
   /bin/systemctl --no-reload disable varnish.service > /dev/null 2>&1 || :
   /bin/systemctl stop varnish.service > /dev/null 2>&1 || :
+  /bin/systemctl stop varnishlog.service > /dev/null 2>&1 || :
+  /bin/systemctl stop varnishncsa.service > /dev/null 2>&1 || :
   %else
   /sbin/service varnish stop > /dev/null 2>&1
   /sbin/service varnishlog stop > /dev/null 2>&1
@@ -411,7 +398,16 @@ fi
 %endif
 
 %changelog
-* Thu Oct 21 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.0-2
+* Fri Jan 29 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.1-1
+- New upstream release
+- Rebased sphinx build patch
+- Removed patch for dns corner case, it has been fixed upstream
+- Removed patch for pcre madness test. It has been removed
+- Added new source pkg-varnish-cache from github, replacing varnish-cache-redhat
+- Also stop varnishlog and varnishncsa on package removal
+- Removed redhat/README.rst. It is no longer included upstream
+
+* Wed Oct 21 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.0-2
 - Moved LICENSE to license catalog for fedora and el7
 
 * Fri Oct 09 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.0-1
