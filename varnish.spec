@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.1.1
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -23,6 +23,7 @@ Patch2:  varnish-4.0.3_fix_Werror_el6.patch
 Patch3:  varnish-4.0.3_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
+Patch7:  varnish-4.1-systemd_daemon.git75955e8.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # To build from git, start with a make dist, see redhat/README.redhat 
@@ -140,6 +141,7 @@ Minimal selinux policy for running varnish4
 %setup -q -n varnish-%{version}%{?vd_rc}
 tar xvzf %SOURCE1
 ln -s pkg-varnish-cache-%{commit1}/redhat redhat
+ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch1 -p0
 %if 0%{?rhel} <= 6 && 0%{?fedora} <= 12
 %patch2 -p0
@@ -151,6 +153,7 @@ ln -s pkg-varnish-cache-%{commit1}/redhat redhat
 %patch4 -p0
 %endif
 %patch6 -p0
+%patch7 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -398,6 +401,10 @@ fi
 %endif
 
 %changelog
+* Wed Feb 03 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.1-2
+- Added patch from upstream, daemonizing varnishd in systemd, as
+  it handles SIGHUP otherwice when running foregrounded under systemd
+
 * Fri Jan 29 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.1-1
 - New upstream release
 - Rebased sphinx build patch
