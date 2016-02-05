@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.1.1
-Release: 2%{?v_rc}%{?dist}
+Release: 3%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -139,7 +139,7 @@ Minimal selinux policy for running varnish4
 
 %prep
 %setup -q -n varnish-%{version}%{?vd_rc}
-tar xvzf %SOURCE1
+tar xzf %SOURCE1
 ln -s pkg-varnish-cache-%{commit1}/redhat redhat
 ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch1 -p0
@@ -159,6 +159,12 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %if 0%{?rhel} == 6
 export CFLAGS="%{optflags} -fPIC"
 export LDFLAGS=" -pie"
+%endif
+
+%if 0%{?fedora} == 24
+%ifarch i386 i686
+export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
+%endif
 %endif
 
 # Remove "--disable static" if you want to build static libraries
@@ -401,6 +407,12 @@ fi
 %endif
 
 %changelog
+* Thu Feb 04 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.1-3
+- Added "-ffloat-store -fexcess-precision=standard" to CFLAGS on i386
+  to work around a bug in gcc6, see
+  https://github.com/dhobsd/Varnish-Cache/commit/9f1035d 
+- Quieted unpacking of distro package source
+
 * Wed Feb 03 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.1-2
 - Added patch from upstream, daemonizing varnishd in systemd, as
   it handles SIGHUP otherwice when running foregrounded under systemd
