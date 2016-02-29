@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.1.1
-Release: 3%{?v_rc}%{?dist}
+Release: 4%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -161,7 +161,7 @@ export CFLAGS="%{optflags} -fPIC"
 export LDFLAGS=" -pie"
 %endif
 
-%if 0%{?fedora} == 24
+%if 0%{?fedora} > 23
 %ifarch i386 i686
 export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
 %endif
@@ -407,6 +407,10 @@ fi
 %endif
 
 %changelog
+* Mon Feb 29 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.1-4
+- Rebuilt agains jemalloc-4.1.0-1
+- fix for gcc6 now for fedora >23
+
 * Thu Feb 04 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.1-3
 - Added "-ffloat-store -fexcess-precision=standard" to CFLAGS on i386
   to work around a bug in gcc6, see
