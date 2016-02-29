@@ -408,7 +408,7 @@ fi
 
 %changelog
 * Mon Feb 29 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.1-4
-- Rebuilt agains jemalloc-4.1.0-1
+- Rebuilt against jemalloc-4.1.0-1
 - fix for gcc6 now for fedora >23
 
 * Thu Feb 04 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.1-3
