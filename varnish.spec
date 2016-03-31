@@ -6,12 +6,12 @@
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%define commit1 105f20b89664f081c216d6e2c168cb8a6c090089
+%define commit1 eff850c7d8863a74baf312dd985177e50b10a6b9
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.1.1
+Version: 4.1.2
 Release: 4%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -20,10 +20,9 @@ Source0: http://repo.varnish-cache.org/source/%{name}-%{version}%{?vd_rc}.tar.gz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 Patch1:  varnish-4.1.1.fix_ld_library_path_in_sphinx_build.patch
 Patch2:  varnish-4.0.3_fix_Werror_el6.patch
-Patch3:  varnish-4.0.3_fix_python24.el5.patch
+Patch3:  varnish-4.1.2_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
-Patch7:  varnish-4.1-systemd_daemon.git75955e8.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # To build from git, start with a make dist, see redhat/README.redhat 
@@ -153,7 +152,6 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch4 -p0
 %endif
 %patch6 -p0
-%patch7 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -161,9 +159,12 @@ export CFLAGS="%{optflags} -fPIC"
 export LDFLAGS=" -pie"
 %endif
 
-%if 0%{?fedora} > 23
 %ifarch i386 i686
+%if 0%{?fedora} > 21
 export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
+%endif
+%if 0%{?rhel} >= 5
+export CFLAGS="%{optflags} -ffloat-store"
 %endif
 %endif
 
@@ -407,6 +408,14 @@ fi
 %endif
 
 %changelog
+* Tue Mar 29 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 1.4.2-1
+- New upstream realease
+- New checkout of pkg-varnish-cache from github
+- Removed systemd patches now merged upstream
+- Updated fix_python_24 patch for el5
+- General i386 floating point precision fix (was fix for gcc6) now for more
+  fedoras/el variants
+
 * Mon Feb 29 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.1-4
 - Rebuilt against jemalloc-4.1.0-1
 - fix for gcc6 now for fedora >23
