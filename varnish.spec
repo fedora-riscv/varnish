@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.1.2
-Release: 4%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -408,7 +408,10 @@ fi
 %endif
 
 %changelog
-* Tue Mar 29 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 1.4.2-1
+* Thu Mar 31 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.2-2
+- Added missing tarball for pkg-varnish
+
+* Tue Mar 29 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.2-1
 - New upstream realease
 - New checkout of pkg-varnish-cache from github
 - Removed systemd patches now merged upstream
