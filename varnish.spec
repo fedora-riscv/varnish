@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.1.3
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -419,7 +419,10 @@ fi
 %endif
 
 %changelog
-* Tue Aug 04 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-1
+* Fri Aug 05 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-2
+- Added python2.4 fix for el5 to the fedora tree
+
+* Thu Aug 04 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-1
 - New upstream release
 - New snapshot of pkg-varnish, commit 4e27994
 - README is now named README.rst
