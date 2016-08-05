@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.1.3
-Release: 2%{?v_rc}%{?dist}
+Release: 3%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -206,7 +206,7 @@ sed -i "s,\${RPM_BUILD_ROOT}/../../BUILD/varnish\*,%{buildroot}%{_includedir}/%{
 %ifarch ppc ppc64
 rm bin/varnishtest/tests/u00000.vtc
 %endif
-make -j16 check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
+make -j5 check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -419,6 +419,10 @@ fi
 %endif
 
 %changelog
+* Fri Aug 05 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-3
+- Reduced the number of parallell checks ran by make, to reduce 
+  stress on the builders
+
 * Fri Aug 05 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-2
 - Added python2.4 fix for el5 to the fedora tree
 
