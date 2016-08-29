@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.1.3
-Release: 3%{?v_rc}%{?dist}
+Release: 4%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -24,13 +24,6 @@ Patch3:  varnish-4.1.2_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-
-# To build from git, start with a make dist, see redhat/README.redhat 
-# You will need at least automake autoconf libtool python-docutils
-#BuildRequires: automake
-#BuildRequires: autoconf
-#BuildRequires: libtool
-#BuildRequires: graphviz
 
 %if 0%{?rhel} > 5
 BuildRequires: python-sphinx
@@ -48,10 +41,10 @@ BuildRequires: make
 %if 0%{?rhel} == 6
 BuildRequires: selinux-policy
 %endif
-Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
 Requires: pcre
+Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 Requires: jemalloc
 Requires: redhat-rpm-config
 Requires(pre): shadow-utils
@@ -94,7 +87,7 @@ available on the following web site: https://www.varnish-cache.org/
 Summary: Libraries for %{name}
 Group: System Environment/Libraries
 BuildRequires: ncurses-devel
-#Obsoletes: libvarnish1
+
 %description libs
 Libraries for %{name}.
 Varnish Cache is a high-performance HTTP accelerator
@@ -116,16 +109,6 @@ Group: Documentation
 
 %description docs
 Documentation files for %name
-
-#% package libs-static
-#Summary: Files for static linking of %{name} library functions
-#Group: Development/Libraries
-#BuildRequires: ncurses-devel
-#Requires: varnish-libs-devel = %{version}-%{release}
-#
-#% description libs-static
-#Files for static linking of varnish library functions
-#Varnish Cache is a high-performance HTTP accelerator
 
 %if 0%{?rhel} == 6
 %package selinux
@@ -164,11 +147,10 @@ export LDFLAGS=" -pie"
 export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
 %endif
 %if 0%{?rhel} >= 5
-export CFLAGS="%{optflags} -ffloat-store"
+export CFLAGS="%{optflags} -fPIC -ffloat-store"
 %endif
 %endif
 
-# Remove "--disable static" if you want to build static libraries
 %configure --disable-static \
 %if 0%{?rhel} <= 5 && 0%{?fedora} <= 12
   --with-rst2man=/bin/true  \
@@ -191,6 +173,10 @@ make %{?_smp_mflags} V=1
         redhat/varnish.initrc redhat/varnishlog.initrc redhat/varnishncsa.initrc
 %endif
 
+# One varnish user is enough
+sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishlog.service
+sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishncsa.service
+
 # Explicit python, please
 sed -i 's/env python/python2/g;' lib/libvcc/vmodtool.py
 
@@ -206,7 +192,7 @@ sed -i "s,\${RPM_BUILD_ROOT}/../../BUILD/varnish\*,%{buildroot}%{_includedir}/%{
 %ifarch ppc ppc64
 rm bin/varnishtest/tests/u00000.vtc
 %endif
-make -j5 check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
+make -j4 check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=4 VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -265,7 +251,7 @@ rm -rf %{buildroot}
 %{_sbindir}/*
 %{_bindir}/*
 %{_var}/lib/varnish
-%attr(0700,root,root) %dir %{_var}/log/varnish
+%attr(0700,varnish,varnish) %dir %{_var}/log/varnish
 %{_mandir}/man1/*.1*
 %{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
@@ -320,13 +306,6 @@ rm -rf %{buildroot}
 %doc doc/html
 %doc doc/changes*.html
 %endif
-
-#%files libs-static
-#%{_libdir}/libvarnish.a
-#%{_libdir}/libvarnishapi.a
-#%{_libdir}/libvarnishcompat.a
-#%{_libdir}/libvcc.a
-#%doc LICENSE
 
 %if 0%{?rhel} == 6
 %files selinux
@@ -419,6 +398,13 @@ fi
 %endif
 
 %changelog
+* Mon Aug 29 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-4
+- Removed out-commented stuff about building from git
+- Removed out-commented sub package -libs-static
+- Use user varnish also for varnishlog and varnishncsa (#1371181)
+- Changed owner of /var/log/varnish, so varnishlog/ncsa can start (#1371181)
+- Reduced the number of parallell checks, to not overflow the builders
+
 * Fri Aug 05 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-3
 - Reduced the number of parallell checks ran by make, to reduce 
   stress on the builders
