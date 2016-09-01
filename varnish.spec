@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.1.3
-Release: 4%{?v_rc}%{?dist}
+Release: 5%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -201,9 +201,6 @@ make install DESTDIR=%{buildroot} INSTALL="install -p"
 # None of these for fedora
 find %{buildroot}/%{_libdir}/ -name '*.la' -exec rm -f {} ';'
 
-# Remove this line to build a devel package with symlinks
-#find %{buildroot}/%{_libdir}/ -name '*.so' -type l -exec rm -f {} ';'
-
 mkdir -p %{buildroot}/var/lib/varnish
 mkdir -p %{buildroot}/var/log/varnish
 mkdir -p %{buildroot}/var/run/varnish
@@ -331,6 +328,10 @@ exit 0
 /sbin/chkconfig --add varnishncsa 
 %endif
 
+# Previous versions had varnishlog and varnishncsa running as root
+chown varnish:varnish /var/log/varnish/varnish.log || true
+chown varnish:varnish /var/log/varnish/varnishncsa.log || true
+
 test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc/varnish/secret)
 
 %triggerun -- varnish < 3.0.2-1
@@ -398,6 +399,11 @@ fi
 %endif
 
 %changelog
+* Thu Sep 01 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-5
+- Changed ownership of varnishlog and varnishncsa logs, as previous
+  versions have had them run as root
+- Removed old outcommented config that is no longer in use
+
 * Mon Aug 29 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-4
 - Removed out-commented stuff about building from git
 - Removed out-commented sub package -libs-static
