@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.1.5
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -9,6 +9,8 @@ Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
 
 Patch6: varnish.jemalloc_as_system_library.patch
 Patch7: varnish-2.1.5.fix_CVE-2013-4484.patch
+Patch8: varnish-2.1.5.fix_CVE-2015-8852.part1.patch
+Patch9: varnish-2.1.5.fix_CVE-2015-8852.part2.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -63,22 +65,13 @@ Group: System Environment/Libraries
 %description docs
 Documentation files for %name
 
-#%package libs-static
-#Summary: Files for static linking of %{name} library functions
-#Group: System Environment/Libraries
-#BuildRequires: ncurses-devel
-#Requires: varnish-libs-devel = %{version}-%{release}
-#
-#%description libs-static
-#Files for static linking of varnish library functions
-#Varnish Cache is a high-performance HTTP accelerator
-
 %prep
 %setup -q
-#%setup -q -n varnish-cache
 
 %patch6
 %patch7
+%patch8
+%patch9
 
 # Needs to regenerate configure after patching in jemalloc system lib support
 # Release tarballs would not need this
@@ -178,9 +171,6 @@ make install DESTDIR=%{buildroot} INSTALL="install -p"
 # None of these for fedora
 find %{buildroot}/%{_libdir}/ -name '*.la' -exec rm -f {} ';'
 
-# Remove this line to build a devel package with symlinks
-#find %{buildroot}/%{_libdir}/ -name '*.so' -type l -exec rm -f {} ';'
-
 mkdir -p %{buildroot}/var/lib/varnish
 mkdir -p %{buildroot}/var/log/varnish
 mkdir -p %{buildroot}/var/run/varnish
@@ -233,13 +223,6 @@ rm -rf %{buildroot}
 %doc doc/html
 %doc doc/changes*.html
 
-#%files libs-static
-#%{_libdir}/libvarnish.a
-#%{_libdir}/libvarnishapi.a
-#%{_libdir}/libvarnishcompat.a
-#%{_libdir}/libvcl.a
-#%doc LICENSE
-
 %pre
 getent group varnish >/dev/null || groupadd -r varnish
 getent passwd varnish >/dev/null || \
@@ -268,6 +251,12 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Thu Sep 08 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.5-6
+- Backported patches for CVE-2015-8852, closes #1328363
+- Fixed some bogus dates in the package changelog
+- Removed out-commented subpackage libs-static, it has never been in use,
+  and similar for libs-devel subpackage that actually has always been there
+
 * Wed Nov 20 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.5-5
 - Backported a patch for CVE-2013-4484, closes #1025129
 
@@ -291,7 +280,7 @@ fi
 - Merged some changes from fedora
 - Upped general version to 3.0 prerelease in trunk
 
-* Wed Nov 04 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-4
+* Thu Nov 04 2010 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.1.4-4
 - Added a patch fixing a missing echo in the init script that
   masked failure output from the script
 - Added a patch from upstream, fixing a problem with Content-Length
@@ -372,7 +361,7 @@ fi
 * Sun Jul 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.4-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
 
-* Thu May 04 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-2
+* Thu Jun 04 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-2
 - Added a s390 specific patch to libjemalloc.
 
 * Fri Mar 27 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-1
@@ -473,11 +462,11 @@ fi
 - Bumped the version number to 1.1.2.
 - Addeed build dependency on libxslt
 
-* Wed Sep 08 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-3
+* Fri Sep 07 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-3
 - Added a patch, changeset 1913 from svn trunk. This makes varnish
   more stable under specific loads. 
 
-* Tue Sep 06 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-2
+* Thu Sep 06 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-2
 - Removed autogen call (only diff from relase tarball)
 
 * Mon Aug 20 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-1
