@@ -1,7 +1,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 2.0.6
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -11,6 +11,8 @@ Patch1: varnish.changes-2.0.6.patch
 Patch2: varnish.fix_v00006.vtc.patch
 Patch3: varnish-2.0.6.fix_logrotate.patch
 Patch4: varnish-2.0.6.fix_CVE-2013-4484.patch
+Patch5: varnish-2.0.6.fix_CVE-2015-8852.part1.patch
+Patch6: varnish-2.0.6.fix_CVE-2015-8852.part2.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # The svn sources needs autoconf, automake and libtool to generate a suitable
 # configure script. Release tarballs would not need this
@@ -54,29 +56,16 @@ Requires: varnish-libs = %{version}-%{release}
 Development files for %{name}-libs
 Varnish is a high-performance HTTP accelerator
 
-#%package libs-static
-#Summary: Files for static linking of %{name} library functions
-#Group: System Environment/Libraries
-#BuildRequires: ncurses-devel
-#Requires: varnish-libs-devel = %{version}-%{release}
-#
-#%description libs-static
-#Files for static linking of varnish library functions
-#Varnish is a high-performance HTTP accelerator
-
 %prep
 %setup -q
-#%setup -q -n varnish-cache
-
-# The svn sources needs to generate a suitable configure script
-# Release tarballs would not need this
-#./autogen.sh
 
 %patch0
 %patch1
 %patch2
 %patch3
 %patch4
+%patch5
+%patch6
 
 # Hack to get 32- and 64-bits tests run concurrently on the same build machine
 case `uname -m` in
@@ -168,9 +157,6 @@ make install DESTDIR=%{buildroot} INSTALL="install -p"
 # None of these for fedora
 find %{buildroot}/%{_libdir}/ -name '*.la' -exec rm -f {} ';'
 
-# Remove this line to build a devel package with symlinks
-#find %{buildroot}/%{_libdir}/ -name '*.so' -type l -exec rm -f {} ';'
-
 mkdir -p %{buildroot}/var/lib/varnish
 mkdir -p %{buildroot}/var/log/varnish
 mkdir -p %{buildroot}/var/run/varnish
@@ -223,13 +209,6 @@ rm -rf %{buildroot}
 %{_libdir}/pkgconfig/varnishapi.pc
 %doc LICENSE
 
-#%files libs-static
-#%{_libdir}/libvarnish.a
-#%{_libdir}/libvarnishapi.a
-#%{_libdir}/libvarnishcompat.a
-#%{_libdir}/libvcl.a
-#%doc LICENSE
-
 %pre
 getent group varnish >/dev/null || groupadd -r varnish
 getent passwd varnish >/dev/null || \
@@ -257,6 +236,12 @@ fi
 %postun libs -p /sbin/ldconfig
 
 %changelog
+* Thu Sep 08 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.0.6-5
+- Backported patches for CVE-2015-8852, closes #1328363
+- Fixed some bogus dates in the package changelog
+- Removed out-commented subpackage libs-static, it has never been in use,
+  and similar for libs-devel subpackage that actually has always been there
+
 * Wed Nov 06 2013 Ingvar Hagelund <ingvar@redpill-linpro.com> - 2.0.6-4
 - Added a patch to logrotate config, closes #554745
 - Backported a patch for CVE-2013-4484, closes #1025129
@@ -285,7 +270,7 @@ fi
 * Sun Jul 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.4-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
 
-* Thu May 04 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-2
+* Thu Jun 04 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-2
 - Added a s390 specific patch to libjemalloc.
 
 * Fri Mar 27 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-1
@@ -386,11 +371,11 @@ fi
 - Bumped the version number to 1.1.2.
 - Addeed build dependency on libxslt
 
-* Wed Sep 08 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-3
+* Fri Sep 07 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-3
 - Added a patch, changeset 1913 from svn trunk. This makes varnish
   more stable under specific loads. 
 
-* Tue Sep 06 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-2
+* Thu Sep 06 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-2
 - Removed autogen call (only diff from relase tarball)
 
 * Mon Aug 20 2007 Ingvar Hagelund <ingvar@linpro.no> - 1.1.1-1
