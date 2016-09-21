@@ -1,0 +1,63 @@
+Patch from upstream
+
+commit dbcbae227b757043651ee1e7d1cc729727f94c8d
+Author: Poul-Henning Kamp <phk@FreeBSD.org>
+Date:   Wed Sep 21 06:22:55 2016 +0000
+
+    Do not insist the H2 connection preface arrives in a single packet.
+    
+    Fixes: #2094
+    Fixes: #2096
+
+diff --git a/bin/varnishd/http1/cache_http1_proto.c b/bin/varnishd/http1/cache_http1_proto.c
+index b5273c6..e788ed6 100644
+--- a/bin/varnishd/http1/cache_http1_proto.c
++++ b/bin/varnishd/http1/cache_http1_proto.c
+@@ -46,6 +46,8 @@
+ #include "config.h"
+ 
+ #include "cache/cache.h"
++#include "cache/cache_transport.h"
++
+ #include "cache_http1.h"
+ 
+ #include "vct.h"
+@@ -66,6 +68,7 @@ enum htc_status_e __match_proto__(htc_complete_f)
+ HTTP1_Complete(struct http_conn *htc)
+ {
+ 	char *p;
++	enum htc_status_e retval;
+ 
+ 	CHECK_OBJ_NOTNULL(htc, HTTP_CONN_MAGIC);
+ 
+@@ -78,6 +81,11 @@ HTTP1_Complete(struct http_conn *htc)
+ 	if (p == htc->rxbuf_e)
+ 		return (HTC_S_EMPTY);
+ 
++	/* Do not return a partial H2 connection preface */
++	retval = H2_prism_complete(htc);
++	if (retval != HTC_S_JUNK)
++		return (retval);
++
+ 	/*
+ 	 * Here we just look for NL[CR]NL to see that reception
+ 	 * is completed.  More stringent validation happens later.
+diff --git a/bin/varnishd/http2/cache_http2_proto.c b/bin/varnishd/http2/cache_http2_proto.c
+index 73d0c95..54b8a2e 100644
+--- a/bin/varnishd/http2/cache_http2_proto.c
++++ b/bin/varnishd/http2/cache_http2_proto.c
+@@ -474,10 +474,11 @@ H2_prism_complete(struct http_conn *htc)
+ 
+ 	CHECK_OBJ_NOTNULL(htc, HTTP_CONN_MAGIC);
+ 	l = htc->rxbuf_e - htc->rxbuf_b;
+-	if (l < strlen(H2_prism))
+-		return (HTC_S_MORE);
+-	if (!memcmp(htc->rxbuf_b, H2_prism, sizeof(H2_prism)))
++	if (l >= sizeof(H2_prism) &&
++	    !memcmp(htc->rxbuf_b, H2_prism, sizeof(H2_prism)))
+ 		return (HTC_S_COMPLETE);
++	if (l < sizeof(H2_prism) && !memcmp(htc->rxbuf_b, H2_prism, l))
++		return (HTC_S_MORE);
+ 	return (HTC_S_JUNK);
+ }
+ 

@@ -6,23 +6,25 @@
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%define commit1 4e2799451f49ad88fd90437ca9fc0df05d3f9e4c
+%define commit1 502fcc0b19794b98458111b99f77cdc03227dcfc
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.1.3
-Release: 5%{?v_rc}%{?dist}
+Version: 5.0.0
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://repo.varnish-cache.org/source/%{name}-%{version}%{?vd_rc}.tar.gz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
-Patch1:  varnish-4.1.1.fix_ld_library_path_in_sphinx_build.patch
-Patch2:  varnish-4.1.3_fix_Werror_el6.patch
-Patch3:  varnish-4.1.2_fix_python24.el5.patch
+Patch1:  varnish-5.0.0.fix_ld_library_path_in_doc_build.patch
+Patch2:  varnish-5.0.0.fix_Werror_el6.patch
+Patch3:  varnish-5.0.0.fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
+Patch7:  varnish-5.0.0.fix_test_suite_on_secondary_arches.patch
+
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %if 0%{?rhel} > 5
@@ -41,10 +43,10 @@ BuildRequires: make
 %if 0%{?rhel} == 6
 BuildRequires: selinux-policy
 %endif
+Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
 Requires: pcre
-Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 Requires: jemalloc
 Requires: redhat-rpm-config
 Requires(pre): shadow-utils
@@ -81,7 +83,7 @@ pages much faster than any application server; giving the website a
 significant speed up.
 
 Documentation wiki and additional information about Varnish Cache is
-available on the following web site: https://www.varnish-cache.org/
+available on: https://www.varnish-cache.org/
 
 %package libs
 Summary: Libraries for %{name}
@@ -92,14 +94,17 @@ BuildRequires: ncurses-devel
 Libraries for %{name}.
 Varnish Cache is a high-performance HTTP accelerator
 
-%package libs-devel
+%package devel
 Summary: Development files for %{name}-libs
 Group: Development/Libraries
 BuildRequires: ncurses-devel
 Requires: varnish-libs = %{version}-%{release}
 Requires: python
+Provides: varnish-libs-devel
+Obsoletes: varnish-libs-devel
+Conflicts: varnish-libs-devel
 
-%description libs-devel
+%description devel
 Development files for %{name}-libs
 Varnish Cache is a high-performance HTTP accelerator
 
@@ -135,6 +140,7 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch4 -p0
 %endif
 %patch6 -p0
+%patch7 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -151,6 +157,9 @@ export CFLAGS="%{optflags} -fPIC -ffloat-store"
 %endif
 %endif
 
+# Man pages are prebuilt. No need to regenerate them.
+export RST2MAN=/bin/true
+
 %configure --disable-static \
 %if 0%{?rhel} <= 5 && 0%{?fedora} <= 12
   --with-rst2man=/bin/true  \
@@ -163,6 +172,12 @@ export CFLAGS="%{optflags} -fPIC -ffloat-store"
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g;
         s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
+# I'll never understand libtool
+mkdir lib/libvarnishapi/.libs
+pushd lib/libvarnishapi/.libs
+ln -s libvarnishapi.so libvarnishapi.so.1
+popd
+
 make %{?_smp_mflags} V=1 
 
 %if 0%{?fedora}%{?rhel} != 0 && 0%{?rhel} <= 4 && 0%{?fedora} <= 8
@@ -170,11 +185,10 @@ make %{?_smp_mflags} V=1
         sed -i 's,--pidfile \$pidfile,,g;
                 s,status -p \$pidfile,status,g;
                 s,killproc -p \$pidfile,killproc,g' \
-        redhat/varnish.initrc redhat/varnishlog.initrc redhat/varnishncsa.initrc
+        redhat/varnish.initrc redhat/varnishncsa.initrc
 %endif
 
 # One varnish user is enough
-sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishlog.service
 sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishncsa.service
 
 # Explicit python, please
@@ -216,13 +230,11 @@ mkdir -p %{buildroot}%{_unitdir}
 install -D -m 0644 redhat/varnish.service %{buildroot}%{_unitdir}/varnish.service
 install -D -m 0644 redhat/varnish.params %{buildroot}%{_sysconfdir}/varnish/varnish.params
 install -D -m 0644 redhat/varnishncsa.service %{buildroot}%{_unitdir}/varnishncsa.service
-install -D -m 0644 redhat/varnishlog.service %{buildroot}%{_unitdir}/varnishlog.service
 sed -i 's,sysconfig/varnish,varnish/varnish.params,' redhat/varnish_reload_vcl
 # default is standard sysvinit
 %else
 install -D -m 0644 redhat/varnish.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/varnish
 install -D -m 0755 redhat/varnish.initrc %{buildroot}%{_initrddir}/varnish
-install -D -m 0755 redhat/varnishlog.initrc %{buildroot}%{_initrddir}/varnishlog
 install -D -m 0755 redhat/varnishncsa.initrc %{buildroot}%{_initrddir}/varnishncsa
 %endif
 install -D -m 0755 redhat/varnish_reload_vcl %{buildroot}%{_sbindir}/varnish_reload_vcl
@@ -267,14 +279,12 @@ rm -rf %{buildroot}
 %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 %{_unitdir}/varnish.service
 %{_unitdir}/varnishncsa.service
-%{_unitdir}/varnishlog.service
 %config(noreplace)%{_sysconfdir}/varnish/varnish.params
 
 # default is standard sysvinit
 %else
 %config(noreplace) %{_sysconfdir}/sysconfig/varnish
 %{_initrddir}/varnish
-%{_initrddir}/varnishlog
 %{_initrddir}/varnishncsa
 %endif
 
@@ -285,13 +295,13 @@ rm -rf %{buildroot}
 %doc LICENSE
 %config %{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
 
-%files libs-devel
+%files devel
 %defattr(-,root,root,-)
 %{_libdir}/lib*.so
 %{_includedir}/%{name}
 %{_libdir}/pkgconfig/varnishapi.pc
 %{_datadir}/%{name}
-%{_datadir}/aclocal/%{name}.m4
+%{_datadir}/aclocal/*.m4
 
 %doc LICENSE
 
@@ -324,12 +334,10 @@ exit 0
 # Other distros: Use chkconfig
 %else
 /sbin/chkconfig --add varnish
-/sbin/chkconfig --add varnishlog
 /sbin/chkconfig --add varnishncsa 
 %endif
 
 # Previous versions had varnishlog and varnishncsa running as root
-chown varnish:varnish /var/log/varnish/varnish.log || true
 chown varnish:varnish /var/log/varnish/varnishncsa.log || true
 
 test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc/varnish/secret)
@@ -377,14 +385,11 @@ if [ $1 -lt 1 ]; then
   %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
   /bin/systemctl --no-reload disable varnish.service > /dev/null 2>&1 || :
   /bin/systemctl stop varnish.service > /dev/null 2>&1 || :
-  /bin/systemctl stop varnishlog.service > /dev/null 2>&1 || :
   /bin/systemctl stop varnishncsa.service > /dev/null 2>&1 || :
   %else
   /sbin/service varnish stop > /dev/null 2>&1
-  /sbin/service varnishlog stop > /dev/null 2>&1
   /sbin/service varnishncsa stop > /dev/null 2>%1
   /sbin/chkconfig --del varnish
-  /sbin/chkconfig --del varnishlog
   /sbin/chkconfig --del varnishncsa 
   %endif
 fi
@@ -399,6 +404,17 @@ fi
 %endif
 
 %changelog
+* Wed Sep 14 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 5.0.0-1
+- New upstream release: 5.0.0
+- Rebased patches for 5.0.0
+- Added patch from upstream fixing a h/2 bug visible on secondary arches
+- New snapshot of pkg-varnish
+- Some cosmetic changes to reduce the diff to the upstream specfile
+- Renamed subpackage varnish-libs-devel to just varnish-devel
+  (as in upstream)
+- Removed varnishlog initrc and systemd start scripts, as in upstream
+  (Nobody should run varnishlog as a daemon continously)
+
 * Thu Sep 01 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-5
 - Changed ownership of varnishlog and varnishncsa logs, as previous
   versions have had them run as root

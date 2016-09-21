@@ -1,0 +1,100 @@
+diff -Naur ../varnish-5.0.0-beta1.orig/bin/varnishd/Makefile.in ./bin/varnishd/Makefile.in
+--- ../varnish-5.0.0-beta1.orig/bin/varnishd/Makefile.in	2016-09-09 10:43:06.000000000 +0200
++++ ./bin/varnishd/Makefile.in	2016-09-14 14:59:53.302301003 +0200
+@@ -2934,6 +2934,8 @@
+ 	    -e 's/^/ "/' $(srcdir)/builtin.vcl >> $@
+ 
+ vhp_hufdec.h: vhp_gen_hufdec
++	LD_LIBRARY_PATH=\
++	$(top_builddir)/lib/libvarnish/.libs:\
+ 	$(AM_V_GEN) ./vhp_gen_hufdec > vhp_hufdec.h_
+ 	mv vhp_hufdec.h_ vhp_hufdec.h
+ 
+diff -Naur ../varnish-5.0.0-beta1.orig/doc/sphinx/Makefile.in ./doc/sphinx/Makefile.in
+--- ../varnish-5.0.0-beta1.orig/doc/sphinx/Makefile.in	2016-09-09 10:43:07.000000000 +0200
++++ ./doc/sphinx/Makefile.in	2016-09-14 14:55:51.898109072 +0200
+@@ -614,39 +614,84 @@
+ 	rm -rf $(BUILDDIR)
+ 
+ include/cli.rst: $(top_builddir)/bin/varnishd/varnishd
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnish/.libs:\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvcc/.libs:\
++$(top_builddir)/lib/libvgz/.libs \
+ 	$(top_builddir)/bin/varnishd/varnishd -x dumprstcli > $@
+ 
+ include/params.rst: $(top_builddir)/bin/varnishd/varnishd
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnish/.libs:\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvcc/.libs:\
++$(top_builddir)/lib/libvgz/.libs \
+ 	$(top_builddir)/bin/varnishd/varnishd -x dumprstparam > $@
+ 
+ include/counters.rst: $(top_builddir)/bin/varnishstat/vsc2rst
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs \
+ 	$(top_builddir)/bin/varnishstat/vsc2rst > $@
+ 
+ # XXX add varnishstat here when it's been _opt2rst'ed
+ 
+ include/varnishncsa_options.rst: $(top_builddir)/bin/varnishncsa/varnishncsa
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs \
+ 	$(top_builddir)/bin/varnishncsa/varnishncsa --options > $@
+ include/varnishncsa_synopsis.rst: $(top_builddir)/bin/varnishncsa/varnishncsa
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs \
+ 	$(top_builddir)/bin/varnishncsa/varnishncsa --synopsis > $@
+ 
+ include/varnishlog_options.rst: $(top_builddir)/bin/varnishlog/varnishlog
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs \
+ 	$(top_builddir)/bin/varnishlog/varnishlog --options > $@
+ include/varnishlog_synopsis.rst: $(top_builddir)/bin/varnishlog/varnishlog
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs \
+ 	$(top_builddir)/bin/varnishlog/varnishlog --synopsis > $@
+ 
+ include/varnishtop_options.rst: $(top_builddir)/bin/varnishtop/varnishtop
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs \
+ 	$(top_builddir)/bin/varnishtop/varnishtop --options > $@
+ include/varnishtop_synopsis.rst: $(top_builddir)/bin/varnishtop/varnishtop
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs \
+ 	$(top_builddir)/bin/varnishtop/varnishtop --synopsis > $@
+ 
+ include/varnishhist_options.rst: $(top_builddir)/bin/varnishhist/varnishhist
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs:\
++$(top_builddir)/lib/libvarnish/.libs \
+ 	$(top_builddir)/bin/varnishhist/varnishhist --options > $@
+ include/varnishhist_synopsis.rst: $(top_builddir)/bin/varnishhist/varnishhist
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs:\
++$(top_builddir)/lib/libvarnish/.libs \
+ 	$(top_builddir)/bin/varnishhist/varnishhist --synopsis > $@
+ 
+ include/varnishstat_options.rst: $(top_builddir)/bin/varnishstat/varnishstat
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs \
+ 	$(top_builddir)/bin/varnishstat/varnishstat --options > $@
+ include/varnishstat_synopsis.rst: $(top_builddir)/bin/varnishstat/varnishstat
++	LD_LIBRARY_PATH=\
++$(top_builddir)/lib/libvarnishcompat/.libs:\
++$(top_builddir)/lib/libvarnishapi/.libs \
+ 	$(top_builddir)/bin/varnishstat/varnishstat --synopsis > $@
+ 
+ include/vsl-tags.rst: $(top_builddir)/lib/libvarnishapi/vsl2rst
