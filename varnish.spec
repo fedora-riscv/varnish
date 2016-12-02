@@ -16,7 +16,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.4
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -221,7 +221,7 @@ rm -rf %{buildroot}
 %{_mandir}/man1/*.1*
 %{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
-%doc LICENSE README ChangeLog
+%doc LICENSE README doc/changes.rst
 %doc etc/builtin.vcl etc/example.vcl
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
@@ -366,6 +366,9 @@ fi
 %endif
 
 %changelog
+* Fri Dec 02 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.4-2
+* Replaced long gone ChangeLog with doc/changes.rst
+
 * Fri Dec 02 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.4-1
 - New upstream release
 - Package scripts are now external
