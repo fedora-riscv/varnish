@@ -3,10 +3,20 @@
 %define vd_rc %{?v_rc:-%{?v_rc}}
 %define    _use_internal_dependency_generator 0
 %define __find_provides %{_builddir}/%{name}-%{version}%{?v_rc:-%{?v_rc}}/redhat/find-provides
+
+# A bug in the rhel7 builders? Looks like they set _pkgdocdir fedora style
+# without version...?
+%{?rhel: %global _pkgdocdir %{_docdir}/%{name}-%{version}}
+
+# Package scripts are now external
+# https://github.com/varnishcache/pkg-varnish-cache
+%define commit1 c4ae0637d75b445ab687fe47ffb17ec3f3841f1d
+%global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
+
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.0.3
-Release: 3%{?v_rc}%{?dist}
+Version: 4.0.4
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -14,15 +24,12 @@ Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
 #Source0: %{name}-%{version}%{?vd_rc}.tar.gz
 #Source0: %{name}-trunk.tar.gz
 #Source0: http://repo.varnish-cache.org/snapshots/%{name}-%{version}%{?vd_rc}.tar.gz
+Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 Patch1:  varnish-4.0.2.fix_ld_library_path_in_sphinx_build.patch
-Patch2:  varnish-4.0.3_fix_Werror_el6.patch
+Patch2:  varnish-4.0.4_fix_Werror_el6.patch
 Patch3:  varnish-4.0.3_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
-Patch5:  varnish-4.0.3_fix_content_length_bug.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-# To build from git, start with a make dist, see redhat/README.redhat 
-# You will need at least automake autoconf libtool python-docutils
-#BuildRequires: automake autoconf libtool python-docutils
 BuildRequires: ncurses-devel groff pcre-devel pkgconfig python-docutils libedit-devel jemalloc-devel
 %if 0%{?rhel} == 6
 BuildRequires: selinux-policy
@@ -111,7 +118,9 @@ Minimal selinux policy for running varnish4
 
 %prep
 %setup -q -n varnish-%{version}%{?vd_rc}
-#%setup -q -n varnish-trunk
+tar xzf %SOURCE1
+ln -s pkg-varnish-cache-%{commit1}/redhat redhat
+ln -s pkg-varnish-cache-%{commit1}/debian debian
 
 %patch1 -p0
 %if 0%{?rhel} <= 6 && 0%{?fedora} <= 12
@@ -123,7 +132,6 @@ Minimal selinux policy for running varnish4
 %if 0%{?rhel} == 6
 %patch4 -p0
 %endif
-%patch5 -p1
 
 %build
 #export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=0"
@@ -213,8 +221,8 @@ rm -rf %{buildroot}
 %{_mandir}/man1/*.1*
 %{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
-%doc LICENSE README redhat/README.redhat ChangeLog
-#% doc etc
+%doc LICENSE README ChangeLog
+%doc etc/builtin.vcl etc/example.vcl
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
 %config(noreplace) %{_sysconfdir}/logrotate.d/varnish
@@ -257,13 +265,6 @@ rm -rf %{buildroot}
 %doc doc/sphinx
 %doc doc/html
 %doc doc/changes*.html
-
-#%files libs-static
-#%{_libdir}/libvarnish.a
-#%{_libdir}/libvarnishapi.a
-#%{_libdir}/libvarnishcompat.a
-#%{_libdir}/libvcc.a
-#%doc LICENSE
 
 %if 0%{?rhel} == 6
 %files selinux
@@ -365,6 +366,15 @@ fi
 %endif
 
 %changelog
+* Fri Dec 02 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.4-1
+- New upstream release
+- Package scripts are now external
+- Removed old stuff about building rpm from source checkout
+- Removed commented stuff about libs-static subpackage
+- Removed patches merged upstream
+- Added the example vcl files to the package
+- red hat epel7 builders set _pkgdocdir fedora style without version
+
 * Fri Mar 13 2015 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.3-3
 - Added a patch fixing a crash on bogus content-length header,
   closing #1200034

@@ -1,0 +1,11 @@
+--- configure.orig	2016-11-30 13:07:13.000000000 +0100
++++ configure	2016-12-02 11:28:49.176227489 +0100
+@@ -17067,7 +17067,7 @@
+ # The reason for -Wno-error=unused-result is a glibc/gcc interaction
+ # idiocy where write is marked as warn_unused_result, causing build
+ # failures.
+-CFLAGS="${CFLAGS} -Wall -Werror"
++#CFLAGS="${CFLAGS} -Wall -Werror"
+ OCFLAGS="${OCFLAGS} -Wall -Werror"
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror=unused-result" >&5
+ $as_echo_n "checking whether C compiler accepts -Werror=unused-result... " >&6; }
