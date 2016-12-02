@@ -9,10 +9,14 @@
 %define commit1 4e2799451f49ad88fd90437ca9fc0df05d3f9e4c
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
+# A bug in the rhel7 builders? Looks like they set _pkgdocdir fedora style
+# without version...?
+%{?rhel: %global _pkgdocdir %{_docdir}/%{name}-%{version}}
+
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.1.3
-Release: 5%{?v_rc}%{?dist}
+Version: 4.1.4
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -292,7 +296,7 @@ rm -rf %{buildroot}
 %{_libdir}/pkgconfig/varnishapi.pc
 %{_datadir}/%{name}
 %{_datadir}/aclocal/%{name}.m4
-
+%{_datadir}/aclocal/%{name}-legacy.m4
 %doc LICENSE
 
 %files docs
@@ -399,6 +403,9 @@ fi
 %endif
 
 %changelog
+* Thu Dec 01 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.4-1
+- New upstream release
+
 * Thu Sep 01 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.3-5
 - Changed ownership of varnishlog and varnishncsa logs, as previous
   versions have had them run as root
