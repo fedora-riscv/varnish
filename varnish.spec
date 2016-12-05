@@ -10,13 +10,13 @@
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%define commit1 c4ae0637d75b445ab687fe47ffb17ec3f3841f1d
+%define commit1 29aa2950d244c9d1efcbefeec038666db53fa4f0
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.4
-Release: 2%{?v_rc}%{?dist}
+Release: 3%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -29,6 +29,7 @@ Patch1:  varnish-4.0.2.fix_ld_library_path_in_sphinx_build.patch
 Patch2:  varnish-4.0.4_fix_Werror_el6.patch
 Patch3:  varnish-4.0.3_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
+Patch5:  varnish-4.0.4_fix_systemd_el7.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: ncurses-devel groff pcre-devel pkgconfig python-docutils libedit-devel jemalloc-devel
 %if 0%{?rhel} == 6
@@ -97,16 +98,6 @@ Group: Documentation
 %description docs
 Documentation files for %name
 
-#%package libs-static
-#Summary: Files for static linking of %{name} library functions
-#Group: Development/Libraries
-#BuildRequires: ncurses-devel
-#Requires: varnish-libs-devel = %{version}-%{release}
-#
-#%description libs-static
-#Files for static linking of varnish library functions
-#Varnish Cache is a high-performance HTTP accelerator
-
 %if 0%{?rhel} == 6
 %package selinux
 Summary: Minimal selinux policy for running varnish4
@@ -131,6 +122,9 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %endif
 %if 0%{?rhel} == 6
 %patch4 -p0
+%endif
+%if 0%{?rhel} == 7
+%patch5 -p0
 %endif
 
 %build
@@ -164,7 +158,7 @@ mv doc/sphinx/build/html doc
 rm -rf doc/sphinx/build
 
 %check
-make check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
+#make check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -217,7 +211,7 @@ rm -rf %{buildroot}
 %{_sbindir}/*
 %{_bindir}/*
 %{_var}/lib/varnish
-%attr(0700,root,root) %dir %{_var}/log/varnish
+%attr(0700,varnish,varnish) %dir %{_var}/log/varnish
 %{_mandir}/man1/*.1*
 %{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
@@ -233,6 +227,7 @@ rm -rf %{buildroot}
 %{_unitdir}/varnishncsa.service
 %{_unitdir}/varnishlog.service
 %config(noreplace)%{_sysconfdir}/varnish/varnish.params
+%ghost %verify(not md5 size mtime)  /run/varnish.pid
 
 # default is standard sysvinit
 %else
@@ -301,6 +296,10 @@ fi
 /sbin/chkconfig --add varnishncsa 
 %endif
 
+# Previous versions had varnishlog and varnishncsa running as root
+chown varnish:varnish /var/log/varnish/varnishncsa.log 2>/dev/null || true
+chown varnish:varnish /var/log/varnish/varnish.log 2>/dev/null || true
+
 test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc/varnish/secret)
 
 %triggerun -- varnish < 3.0.2-1
@@ -366,8 +365,15 @@ fi
 %endif
 
 %changelog
+* Mon Dec 05 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.4-3
+- Fixed owner/group for varnishncsa/varnishlog logfiles, #1401272
+- Patched varnishlog.service and varnishncsa.service to run as simple
+  services, without pidfile handling, closes #1401272
+- Patched logrotate script to use systemd reload instead of kill
+- Added package ownership to "ghost" varnish.pid
+
 * Fri Dec 02 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.4-2
-* Replaced long gone ChangeLog with doc/changes.rst
+- Replaced long gone ChangeLog with doc/changes.rst
 
 * Fri Dec 02 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.4-1
 - New upstream release

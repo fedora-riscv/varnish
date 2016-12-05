@@ -1,0 +1,31 @@
+diff -Naur ../varnish-4.0.4.orig/redhat/varnishlog.service redhat/varnishlog.service
+--- ../varnish-4.0.4.orig/redhat/varnishlog.service	1970-01-01 01:00:00.000000000 +0100
++++ redhat/varnishlog.service	2016-12-05 20:44:01.579083538 +0100
+@@ -0,0 +1,15 @@
++[Unit]
++Description=Varnish Cache HTTP accelerator logging daemon
++After=varnish.service
++
++[Service]
++RuntimeDirectory=varnishlog
++Type=forking
++PIDFile=/run/varnishlog/varnishlog.pid
++User=varnish
++Group=varnish
++ExecStart=/usr/bin/varnishlog -a -w /var/log/varnish/varnish.log -D -P /run/varnishlog/varnishlog.pid
++ExecReload=/bin/kill -HUP $MAINPID
++
++[Install]
++WantedBy=multi-user.target
+diff -Naur ../varnish-4.0.4.orig/redhat/varnishncsa.service redhat/varnishncsa.service
+--- ../varnish-4.0.4.orig/redhat/varnishncsa.service	2016-11-29 10:45:14.000000000 +0100
++++ redhat/varnishncsa.service	2016-12-05 20:25:01.878729560 +0100
+@@ -6,7 +6,7 @@
+ RuntimeDirectory=varnishncsa
+ Type=forking
+ PIDFile=/run/varnishncsa/varnishncsa.pid
+-User=varnishlog
++User=varnish
+ Group=varnish
+ ExecStart=/usr/bin/varnishncsa -a -w /var/log/varnish/varnishncsa.log -D -P /run/varnishncsa/varnishncsa.pid
+ ExecReload=/bin/kill -HUP $MAINPID
