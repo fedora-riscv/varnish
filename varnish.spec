@@ -16,7 +16,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.4
-Release: 3%{?v_rc}%{?dist}
+Release: 4%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -30,6 +30,7 @@ Patch2:  varnish-4.0.4_fix_Werror_el6.patch
 Patch3:  varnish-4.0.3_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch5:  varnish-4.0.4_fix_systemd_el7.patch
+Patch6:  varnish-4.0.4_missing_varnishlog_initrc.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: ncurses-devel groff pcre-devel pkgconfig python-docutils libedit-devel jemalloc-devel
 %if 0%{?rhel} == 6
@@ -123,9 +124,10 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %if 0%{?rhel} == 6
 %patch4 -p0
 %endif
-%if 0%{?rhel} == 7
+%if 0%{?rhel} == 7 || 0%{?fedora} >= 17
 %patch5 -p0
 %endif
+%patch6 -p0
 
 %build
 #export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=0"
@@ -365,6 +367,11 @@ fi
 %endif
 
 %changelog
+* Mon Dec 12 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.4-4
+- Fixed missing user and group in varnish.service, so varnishd
+  runs as user and group 'varnish' instead of 'nobody'
+- Readded missing varnishlog.initrc
+
 * Mon Dec 05 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.4-3
 - Fixed owner/group for varnishncsa/varnishlog logfiles, #1401272
 - Patched varnishlog.service and varnishncsa.service to run as simple
