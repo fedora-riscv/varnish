@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 5.0.0
-Release: 1%{?v_rc}%{?dist}
+Release: 1%{?v_rc}%{?dist}.1
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -404,6 +404,9 @@ fi
 %endif
 
 %changelog
+* Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.0.0-1.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
 * Wed Sep 14 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 5.0.0-1
 - New upstream release: 5.0.0
 - Rebased patches for 5.0.0
