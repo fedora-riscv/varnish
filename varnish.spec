@@ -6,28 +6,26 @@
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%define commit1 502fcc0b19794b98458111b99f77cdc03227dcfc
+%define commit1 92373fee0017d6087977e31eb88f9af227b6d9d5
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 5.0.0
-Release: 1%{?v_rc}%{?dist}.1
+Version: 5.1.1
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://repo.varnish-cache.org/source/%{name}-%{version}%{?vd_rc}.tar.gz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
-Patch1:  varnish-5.0.0.fix_ld_library_path_in_doc_build.patch
-Patch2:  varnish-5.0.0.fix_Werror_el6.patch
-Patch3:  varnish-5.0.0.fix_python24.el5.patch
+Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
-Patch7:  varnish-5.0.0.fix_test_suite_on_secondary_arches.patch
+Patch9:  varnish-5.1.1.fix_python_version.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-%if 0%{?rhel} > 5
+%if 0%{?rhel} >= 6
 BuildRequires: python-sphinx
 %endif
 BuildRequires: python-docutils
@@ -39,6 +37,7 @@ BuildRequires: libedit-devel
 BuildRequires: jemalloc-devel
 BuildRequires: gcc
 BuildRequires: make
+BuildRequires: graphviz
 
 %if 0%{?rhel} == 6
 BuildRequires: selinux-policy
@@ -77,7 +76,7 @@ Requires: gcc
 %description
 This is Varnish Cache, a high-performance HTTP accelerator.
 
-Varnish Cache stores web pages in memory so web servers don't have to
+Varnish Cache stores web pages in memory so web servers don’t have to
 create the same web page over and over again. Varnish Cache serves
 pages much faster than any application server; giving the website a
 significant speed up.
@@ -102,7 +101,6 @@ Requires: varnish-libs = %{version}-%{release}
 Requires: python
 Provides: varnish-libs-devel
 Obsoletes: varnish-libs-devel
-Conflicts: varnish-libs-devel
 
 %description devel
 Development files for %{name}-libs
@@ -130,17 +128,11 @@ tar xzf %SOURCE1
 ln -s pkg-varnish-cache-%{commit1}/redhat redhat
 ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch1 -p0
-%if 0%{?rhel} <= 6 && 0%{?fedora} <= 12
-%patch2 -p0
-%endif
-%if 0%{?rhel} <= 5 && 0%{?fedora} <= 12
-%patch3 -p0
-%endif
 %if 0%{?rhel} == 6
 %patch4 -p0
+%patch9 -p0
 %endif
 %patch6 -p0
-%patch7 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -148,22 +140,18 @@ export CFLAGS="%{optflags} -fPIC"
 export LDFLAGS=" -pie"
 %endif
 
-%ifarch i386 i686
+# https://gcc.gnu.org/wiki/FAQ#PR323%ifarch i386 i686
 %if 0%{?fedora} > 21
 export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
 %endif
-%if 0%{?rhel} >= 5
+%if 0%{?rhel} >= 6
 export CFLAGS="%{optflags} -fPIC -ffloat-store"
-%endif
 %endif
 
 # Man pages are prebuilt. No need to regenerate them.
 export RST2MAN=/bin/true
 
 %configure --disable-static \
-%if 0%{?rhel} <= 5 && 0%{?fedora} <= 12
-  --with-rst2man=/bin/true  \
-%endif
   --localstatedir=/var/lib  \
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -178,15 +166,12 @@ pushd lib/libvarnishapi/.libs
 ln -s libvarnishapi.so libvarnishapi.so.1
 popd
 
-make %{?_smp_mflags} V=1 
-
-%if 0%{?fedora}%{?rhel} != 0 && 0%{?rhel} <= 4 && 0%{?fedora} <= 8
-        # Old style daemon function
-        sed -i 's,--pidfile \$pidfile,,g;
-                s,status -p \$pidfile,status,g;
-                s,killproc -p \$pidfile,killproc,g' \
-        redhat/varnish.initrc redhat/varnishncsa.initrc
+# Upstream github issue #2265
+%if 0%{?rhel} == 6 
+sed -i 's/-Werror$//g;' bin/varnishd/Makefile
 %endif
+
+make %{?_smp_mflags} V=1 
 
 # One varnish user is enough
 sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishncsa.service
@@ -206,7 +191,7 @@ sed -i "s,\${RPM_BUILD_ROOT}/../../BUILD/varnish\*,%{buildroot}%{_includedir}/%{
 %ifarch ppc ppc64
 rm bin/varnishtest/tests/u00000.vtc
 %endif
-make -j4 check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=4 VERBOSE=1
+make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -309,10 +294,10 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %doc LICENSE
 %doc doc/sphinx
-%if 0%{?rhel} > 5 || 0%{?fedora} > 12
-%doc doc/html
-%doc doc/changes*.html
-%endif
+#if 0%{?rhel} >= 6 || 0%{?fedora} > 12
+#doc doc/html
+#doc doc/changes*.html
+#endif
 
 %if 0%{?rhel} == 6
 %files selinux
@@ -404,6 +389,17 @@ fi
 %endif
 
 %changelog
+* Thu Mar 16 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 5.1.1-1
+- New upstream release
+- Rebased patches for 5.1.1
+- Removed patches merged upstream
+- Pulled support for rhel5 and clones
+- Updated pkg-varnish checkout to 92373fe
+
+* Mon Feb 13 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 5.0.0-2
+- Updated snapshot of pgk-varnish
+- Added a patch for varnish_reload_vcl, fixes stricter vcl names 
+
 * Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.0.0-1.1
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
 
