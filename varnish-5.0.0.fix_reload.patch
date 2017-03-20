@@ -1,0 +1,21 @@
+commit ef5cba9628fc21d2396876119255b3af202784f8
+Author: Ingvar Hagelund <ingvar@redpill-linpro.com>
+Date:   Thu Jan 26 13:29:15 2017 +0100
+
+    Comply with varnishd commit
+    https://github.com/varnishcache/varnish-cache/commit/169e162
+    "Enforce that VCL names must be C-language identifiers"
+
+diff --git a/redhat/varnish_reload_vcl b/redhat/varnish_reload_vcl
+index c1a3191..d496393 100755
+--- a/redhat/varnish_reload_vcl
++++ b/redhat/varnish_reload_vcl
+@@ -76,7 +76,7 @@ fi
+ VARNISHADM="varnishadm $secret -T $VARNISH_ADMIN_LISTEN_ADDRESS:$VARNISH_ADMIN_LISTEN_PORT"
+ 
+ # Now do the real work
+-new_config="reload_$(date +%FT%H:%M:%S)"
++new_config="reload_$(date +%FT%H%M%S)"
+ 
+ # Check if we are able to connect at all
+ if $VARNISHADM vcl.list > /dev/null; then
