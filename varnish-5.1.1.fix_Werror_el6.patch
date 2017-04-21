@@ -1,0 +1,21 @@
+--- configure.ac.orig	2017-03-18 02:06:01.568741182 +0100
++++ configure.ac	2017-03-18 02:09:17.808203587 +0100
+@@ -209,7 +209,6 @@
+ 
+ # Support for visibility attribute
+ save_CFLAGS="${CFLAGS}"
+-CFLAGS="${CFLAGS} -Werror"
+ 
+ AC_CACHE_CHECK([whether we have support for visibility attributes],
+ 	[ac_cv_have_viz],
+@@ -535,10 +534,6 @@
+     AX_CHECK_COMPILE_FLAG([${SUNCC_CFLAGS}],
+ 	[CFLAGS="${CFLAGS} ${SUNCC_CFLAGS}"
+ 	 OCFLAGS="${OCFLAGS} ${SUNCC_CFLAGS}"])
+-else
+-    AX_CHECK_COMPILE_FLAG([-Werror],
+-	[CFLAGS="${CFLAGS} -Werror"
+-	 OCFLAGS="${OCFLAGS} -Werror"])
+ fi
+ 
+ AX_CHECK_COMPILE_FLAG([-Werror=unused-result],
