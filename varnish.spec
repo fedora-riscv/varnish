@@ -4,14 +4,19 @@
 %define    _use_internal_dependency_generator 0
 %define __find_provides %{_builddir}/%{name}-%{version}%{?v_rc:-%{?v_rc}}/redhat/find-provides
 
+# https://github.com/varnishcache/varnish-cache/issues/2269
+%define debug_package %{nil}
+%define _enable_debug_package 0
+%define __os_install_post /usr/lib/rpm/brp-compress %{nil}
+
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%define commit1 92373fee0017d6087977e31eb88f9af227b6d9d5
+%define commit1 5b976190ce9e0720f1eee6e9eaccd8a15eaa498d
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 5.1.1
+Version: 5.1.2
 Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -99,7 +104,7 @@ Group: Development/Libraries
 BuildRequires: ncurses-devel
 Requires: varnish-libs = %{version}-%{release}
 Requires: python
-Provides: varnish-libs-devel
+Provides: varnish-libs-devel = %{version}-%{release}
 Obsoletes: varnish-libs-devel
 
 %description devel
@@ -140,12 +145,14 @@ export CFLAGS="%{optflags} -fPIC"
 export LDFLAGS=" -pie"
 %endif
 
-# https://gcc.gnu.org/wiki/FAQ#PR323%ifarch i386 i686
+# https://gcc.gnu.org/wiki/FAQ#PR323
+%ifarch i386 i686
 %if 0%{?fedora} > 21
 export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
 %endif
 %if 0%{?rhel} >= 6
 export CFLAGS="%{optflags} -fPIC -ffloat-store"
+%endif
 %endif
 
 # Man pages are prebuilt. No need to regenerate them.
@@ -389,6 +396,12 @@ fi
 %endif
 
 %changelog
+* Fri Apr 07 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 5.1.2-1
+- New upstream release
+- Updated pkg-varnish checkout to 5b97619, setting systemd memlock limit
+  to actual 82MB, as it says in the comment
+- Disabled stripping and building of debug packages, upstream issue #2269
+
 * Thu Mar 16 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 5.1.1-1
 - New upstream release
 - Rebased patches for 5.1.1
