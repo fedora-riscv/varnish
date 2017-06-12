@@ -15,8 +15,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.1.4
-Release: 2%{?v_rc}%{?dist}
+Version: 4.1.6
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -403,6 +403,9 @@ fi
 %endif
 
 %changelog
+* Mon Jun 12 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.6-1
+- New upstream release
+
 * Thu Dec 01 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.4-2
 - Replacing long gone ChangeLog with changes.rst
 
