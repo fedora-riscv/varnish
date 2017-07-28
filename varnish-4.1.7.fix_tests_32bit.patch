@@ -1,0 +1,104 @@
+diff --git a/bin/varnishncsa/varnishncsa.c b/bin/varnishncsa/varnishncsa.c
+index 71ef79b8a..1224fcf43 100644
+--- a/bin/varnishncsa/varnishncsa.c
++++ b/bin/varnishncsa/varnishncsa.c
+@@ -637,16 +637,11 @@ parse_x_format(char *buf)
+ 			i = strtol(r + 1, &s, 10);
+ 			if (s != e - 1)
+ 				VUT_Error(1, "Syntax error: VSL:%s]", buf);
+-			if (i <= 0)
++			if (i <= 0 || i > 255) {
+ 				VUT_Error(1,
+ 				    "Syntax error. Field specifier must be"
+-				    " positive: %s]",
++				    " between 1 and 255: %s]",
+ 				    buf);
+-			if (i > INT_MAX) {
+-				VUT_Error(1,
+-				    "Field specifier %ld for the tag VSL:%s]"
+-				    " is probably too high",
+-				    i, buf);
+ 			}
+ 			*r = '\0';
+ 		} else
+diff --git a/bin/varnishtest/tests/c00071.vtc b/bin/varnishtest/tests/c00071.vtc
+index b6c994731..107835cff 100644
+--- a/bin/varnishtest/tests/c00071.vtc
++++ b/bin/varnishtest/tests/c00071.vtc
+@@ -14,7 +14,7 @@ server s1 {
+ varnish v1 -vcl+backend {
+ 	import ${vmod_debug};
+ 	sub vcl_deliver {
+-		debug.workspace_allocate(client, debug.workspace_free(client) - 208);
++		debug.workspace_allocate(client, debug.workspace_free(client) - 192);
+ 
+ 		if (req.url ~ "/bar") {
+ 			set resp.http.x-foo = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+diff --git a/bin/varnishtest/tests/r02233.vtc b/bin/varnishtest/tests/r02233.vtc
+index 87ab8ad0f..efac2bb8d 100644
+--- a/bin/varnishtest/tests/r02233.vtc
++++ b/bin/varnishtest/tests/r02233.vtc
+@@ -5,20 +5,26 @@ server s1 {
+ 	txresp
+ } -start
+ 
+-varnish v1 -arg "-p workspace_client=9k" -vcl+backend {
++varnish v1 -vcl+backend {
++	import ${vmod_debug};
+ 	import ${vmod_std};
+ 
+ 	sub vcl_recv {
+-		set req.url = std.querysort(req.url);
++		debug.workspace_allocate(client, debug.workspace_free(client) - 92);
++		if (std.querysort(req.url) == req.url) {
++			std.log("querysort failed");
++		}
+ 	}
+ } -start
+ 
++logexpect l1 -v v1 {
++	expect * *	VCL_Log "querysort failed"
++} -start
++
+ client c1 {
+-	send "GET /?a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1"
+-	send "&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1"
+-	send "&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1"
+-	send " HTTP/1.1\r\n"
+-	send "Host: foo\r\n\r\n"
++	txreq -url /?a=2&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1&a=1
+ 	rxresp
+ 	expect resp.status == 500
+ } -run
++
++logexpect l1 -wait
+diff --git a/bin/varnishtest/tests/u00003.vtc b/bin/varnishtest/tests/u00003.vtc
+index 9c43f6229..13b8cba24 100644
+--- a/bin/varnishtest/tests/u00003.vtc
++++ b/bin/varnishtest/tests/u00003.vtc
+@@ -61,9 +61,9 @@ shell -err -expect "Unknown log tag: Begin[a" \
+ 	{varnishncsa -F "%{VSL:Begin[a}x"}
+ shell -err -expect "Syntax error: VSL:Begin[a]" \
+ 	{varnishncsa -F "%{VSL:Begin[a]}x"}
+-shell -err -expect "Syntax error. Field specifier must be positive: Begin[0]" \
++shell -err -expect "Syntax error. Field specifier must be between 1 and 255: Begin[0]" \
+ 	{varnishncsa -F "%{VSL:Begin[0]}x"}
+-shell -err -expect "Field specifier 999999999999 for the tag VSL:Begin[999999999999] is probably too high" \
++shell -err -expect "Syntax error. Field specifier must be between 1 and 255: Begin[999999999999]" \
+ 	{varnishncsa -F "%{VSL:Begin[999999999999]}x"}
+ shell -err -expect "Can't open format file (No such file or directory)" \
+ 	{varnishncsa -f /nonexistent/file}
+diff --git a/doc/sphinx/reference/varnishncsa.rst b/doc/sphinx/reference/varnishncsa.rst
+index 708989d37..4de94bfad 100644
+--- a/doc/sphinx/reference/varnishncsa.rst
++++ b/doc/sphinx/reference/varnishncsa.rst
+@@ -184,7 +184,8 @@ Supported formatters are:
+ 
+     The field will, if present, treat the log record as a white
+     space separated list of fields, and only the nth part of the
+-    record will be matched against. Fields start counting at 1.
++    record will be matched against. Fields start counting at 1 and
++    run up to 255.
+ 
+     Defaults to '-' when the tag is not seen, the record prefix
+     does not match or the field is out of bounds. If a tag appears

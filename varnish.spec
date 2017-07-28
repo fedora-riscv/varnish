@@ -15,7 +15,7 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.1.6
+Version: 4.1.7
 Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -27,6 +27,9 @@ Patch2:  varnish-4.1.3_fix_Werror_el6.patch
 Patch3:  varnish-4.1.2_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
+# Updated tests with more correct values from upstream
+Patch7:  varnish-4.1.7.fix_tests_32bit.patch
+
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %if 0%{?rhel} > 5
@@ -139,6 +142,7 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch4 -p0
 %endif
 %patch6 -p0
+%patch7 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -192,10 +196,19 @@ rm  -f doc/sphinx/Makefile.in.orig
 # Replace bogus RPM_BUILD_ROOT variable with the contents of the actual buildroot macro
 sed -i "s,\${RPM_BUILD_ROOT}/../../BUILD/varnish\*,%{buildroot}%{_includedir}/%{name}," redhat/find-provides
 
-%check
-%ifarch ppc ppc64
-rm bin/varnishtest/tests/u00000.vtc
+# Fix a 32bit bug, upstream issue 2344
+#ifarch i386 i686 ppc %arm
+#sed -i "s,-expect \"Field specifier 999999999999,-expect \"Field specifier $(getconf INT_MAX),g;" bin/varnishtest/tests/u00003.vtc
+#endif
+
+# This test breaks on busy arm hosts, and completes fine given fast enough
+# hardware. It s not arch specific, so should be safe to skip, according
+# to upstream.
+%ifarch %arm
+rm bin/varnishtest/tests/r02035.vtc
 %endif
+
+%check
 make -j4 check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=4 VERBOSE=1
 
 %install
@@ -403,6 +416,11 @@ fi
 %endif
 
 %changelog
+* Thu Jul 27 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.7-1
+- New upstream release
+- Added patches for overflow tests on 32bit, courtesy of fgsch
+- test u00000 now runs fine on ppc64, so readded it
+
 * Mon Jun 12 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.6-1
 - New upstream release
 
