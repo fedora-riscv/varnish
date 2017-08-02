@@ -1,0 +1,12 @@
+diff -rup varnish-5.1.2.orig/bin/varnishd/http1/cache_http1_vfp.c varnish-5.1.2/bin/varnishd/http1/cache_http1_vfp.c
+--- varnish-5.1.2.orig/bin/varnishd/http1/cache_http1_vfp.c	2017-08-02 22:43:30.137116214 +0200
++++ varnish-5.1.2/bin/varnishd/http1/cache_http1_vfp.c	2017-08-02 22:44:06.433218762 +0200
+@@ -152,7 +152,7 @@ v1f_pull_chunked(struct vfp_ctx *vc, str
+ 		if (q == NULL || *q != '\0')
+ 			return (VFP_Error(vc, "chunked header number syntax"));
+ 		cl = (ssize_t)cll;
+-		if ((uintmax_t)cl != cll)
++		if (cl < 0 || (uintmax_t)cl != cll)
+ 			return (VFP_Error(vc, "bogusly large chunk size"));
+ 
+ 		vfe->priv2 = cl;
