@@ -139,6 +139,7 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch9 -p0
 %endif
 %patch6 -p0
+%patch10 -p1
 
 %build
 %if 0%{?rhel} == 6
