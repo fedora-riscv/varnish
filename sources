@@ -1,3 +1,2 @@
-0915ca5e14c53f5f157695b0447f37db  varnish-4.0.4.tar.gz
-a85259407b812890dcee1b1c2e0c92b1  pkg-varnish-cache-c4ae063.tar.gz
-71000a5216cdbe5380848757958dddf3  pkg-varnish-cache-29aa295.tar.gz
+SHA512 (varnish-4.0.5.tar.gz) = a08259f6f9c6fffa188b26c1f8c630de5e6d2f6d52f6efa9d5d8239cdd8721c53e2be3379f8100efb537e74416eadd6c865f4cc687db1c5a9f757bb3f73abeda
+SHA512 (pkg-varnish-cache-29aa295.tar.gz) = 5fec8b555a643e5ca8518ab9103d5108dabc0180911015dd26bb6b5e98668a9d0ee2dc7f2c3bd0e0dc80f6d8490b1365f56221cef39c01d55bfeb3059d04f8a7

@@ -15,8 +15,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.0.4
-Release: 4%{?v_rc}%{?dist}
+Version: 4.0.5
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -160,7 +160,7 @@ mv doc/sphinx/build/html doc
 rm -rf doc/sphinx/build
 
 %check
-#make check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
+make check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" TESTS_PARALLELISM=5 VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -367,6 +367,10 @@ fi
 %endif
 
 %changelog
+* Wed Aug 02 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.5-1
+- New upstream release. Includes patches for security issue VSV00001
+  closes bz #1476784, #1477699
+
 * Mon Dec 12 2016 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.4-4
 - Fixed missing user and group in varnish.service, so varnishd
   runs as user and group 'varnish' instead of 'nobody'
