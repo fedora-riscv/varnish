@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 5.0.0
-Release: 2%{?v_rc}%{?dist}
+Release: 3%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -25,6 +25,7 @@ Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
 Patch7:  varnish-5.0.0.fix_test_suite_on_secondary_arches.patch
 Patch8:  varnish-5.0.0.fix_reload.patch
+Patch9:  varnish-vsv00001.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -143,6 +144,7 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch6 -p0
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -406,6 +408,9 @@ fi
 %endif
 
 %changelog
+* Wed Aug 02 2017 Patrick Uiterwijk <patrick@puiterwijk.org> - 5.0.0-2.1
+- Add patch for vsv00001
+
 * Mon Mar 20 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 5.0.0-2
 - Added patch from pkg-varnish fixing systemctl reload varnish
 
