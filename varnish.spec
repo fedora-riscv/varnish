@@ -16,8 +16,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 5.1.2
-Release: 3%{?v_rc}%{?dist}
+Version: 5.1.3
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -27,7 +27,6 @@ Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
-Patch10: varnish-vsv00001.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -139,7 +138,6 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch9 -p0
 %endif
 %patch6 -p0
-%patch10 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -398,6 +396,9 @@ fi
 %endif
 
 %changelog
+* Thu Aug 03 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.1.3-1
+- New upstream release, including fix for VSV00001
+
 * Wed Aug 02 2017 Patrick Uiterwijk <patrick@puiterwijk.org> - 5.1.2-3
 - Added patch for vsv00001
 
