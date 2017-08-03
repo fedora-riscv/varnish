@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 5.0.0
-Release: 3%{?v_rc}%{?dist}
+Release: 4%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -408,7 +408,7 @@ fi
 %endif
 
 %changelog
-* Fri Aug 04 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.0.0-3
+* Fri Aug 04 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.0.0-4
 - Updated patch for VSV00001, including test case
 
 * Wed Aug 02 2017 Patrick Uiterwijk <patrick@puiterwijk.org> - 5.0.0-2.1
