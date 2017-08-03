@@ -17,7 +17,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 5.1.3
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -399,9 +399,11 @@ fi
 %endif
 
 %changelog
+* Fri Aug 04 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.1.3-2
+- Disabled jemalloc on aarch64 and s390x, as it fails reproducably
+
 * Thu Aug 03 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.1.3-1
 - New upstream release, including fix for VSV00001
-- Disabled jemalloc on aarch64 and s390x, as it fails reproducably
 
 * Wed Aug 02 2017 Patrick Uiterwijk <patrick@puiterwijk.org> - 5.1.2-3
 - Added patch for vsv00001
