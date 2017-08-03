@@ -159,6 +159,9 @@ export CFLAGS="%{optflags} -fPIC -ffloat-store"
 export RST2MAN=/bin/true
 
 %configure --disable-static \
+%ifarch aarch64 s390x
+  --with-jemalloc=no \
+%endif
   --localstatedir=/var/lib  \
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -398,6 +401,7 @@ fi
 %changelog
 * Thu Aug 03 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.1.3-1
 - New upstream release, including fix for VSV00001
+- Disabled jemalloc on aarch64 and s390x, as it fails reproducably
 
 * Wed Aug 02 2017 Patrick Uiterwijk <patrick@puiterwijk.org> - 5.1.2-3
 - Added patch for vsv00001
