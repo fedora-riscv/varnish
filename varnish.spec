@@ -15,7 +15,7 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.1.7
+Version: 4.1.8
 Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -416,6 +416,10 @@ fi
 %endif
 
 %changelog
+* Thu Aug 03 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.8-1
+- New upstream release, including fix for security bug VSV00001
+  closes #1477698, #1477222
+
 * Thu Jul 27 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.7-1
 - New upstream release
 - Added patches for overflow tests on 32bit, courtesy of fgsch
