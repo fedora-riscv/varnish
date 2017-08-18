@@ -27,7 +27,7 @@ Patch2:  varnish-4.1.3_fix_Werror_el6.patch
 Patch3:  varnish-4.1.2_fix_python24.el5.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
-# Updated tests with more correct values from upstream
+# Updated tests with more correct values from upstream, upstream issue #2344
 Patch7:  varnish-4.1.7.fix_tests_32bit.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
