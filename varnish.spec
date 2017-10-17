@@ -16,12 +16,12 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 5.1.3
-Release: 2%{?v_rc}%{?dist}
+Version: 5.2.0
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
-Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tar.gz
+Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
@@ -198,10 +198,10 @@ rm  -f doc/sphinx/Makefile.in.orig
 sed -i "s,\${RPM_BUILD_ROOT}/../../BUILD/varnish\*,%{buildroot}%{_includedir}/%{name}," redhat/find-provides
 
 %check
-%ifarch ppc ppc64
-rm bin/varnishtest/tests/u00000.vtc
+%ifarch ppc64 ppc64le aarch64
+sed -i 's/48/128/g;' bin/varnishtest/tests/c00057.vtc
 %endif
-#make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
+make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -399,6 +399,9 @@ fi
 %endif
 
 %changelog
+* Thu Oct 12 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.2.0-1
+- New upstream release
+
 * Fri Aug 04 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.1.3-2
 - Disabled jemalloc on aarch64, as it fails reproducably
 - Disabled running make check. Too many timing issues. All tests run
