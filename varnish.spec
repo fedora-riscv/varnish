@@ -146,7 +146,7 @@ export LDFLAGS=" -pie"
 %endif
 
 # https://gcc.gnu.org/wiki/FAQ#PR323
-%ifarch i386 i686
+%ifarch %ix86
 %if 0%{?fedora} > 21
 export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
 %endif
@@ -179,6 +179,7 @@ popd
 # Upstream github issue #2265
 %if 0%{?rhel} == 6 
 sed -i 's/-Werror$//g;' bin/varnishd/Makefile
+sed -i 's/-Werror$//g;' lib/libvarnishapi/Makefile
 %endif
 
 make %{?_smp_mflags} V=1 
@@ -399,6 +400,10 @@ fi
 %endif
 
 %changelog
+* Mon Oct 23 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.2.0-2
+- Use ix86 macro for all ifarch matches of 32bit x86 hardware
+- Added Makefile hack for el6 also to libvarnishapi
+
 * Thu Oct 12 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.2.0-1
 - New upstream release
 
