@@ -17,7 +17,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 5.2.0
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
