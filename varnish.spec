@@ -16,8 +16,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 5.2.0
-Release: 2%{?v_rc}%{?dist}
+Version: 5.2.1
+Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -400,6 +400,10 @@ fi
 %endif
 
 %changelog
+* Wed Nov 15 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.2.1-1
+- New upstream release. A security release
+  Includes fix for CVE-2017-8807, closes 1512798
+
 * Mon Oct 23 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.2.0-2
 - Use ix86 macro for all ifarch matches of 32bit x86 hardware
 - Added Makefile hack for el6 also to libvarnishapi
