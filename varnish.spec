@@ -17,7 +17,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 5.1.3
-Release: 2%{?v_rc}%{?dist}
+Release: 3%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -27,6 +27,7 @@ Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
+Patch10: vsv00002-5.1.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -138,6 +139,7 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch9 -p0
 %endif
 %patch6 -p0
+%patch10 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -201,7 +203,7 @@ sed -i "s,\${RPM_BUILD_ROOT}/../../BUILD/varnish\*,%{buildroot}%{_includedir}/%{
 %ifarch ppc ppc64
 rm bin/varnishtest/tests/u00000.vtc
 %endif
-#make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
+make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -399,6 +401,9 @@ fi
 %endif
 
 %changelog
+* Tue Nov 14 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.1.3-3
+- Security: Added patch for CVE-2017-8807, closing bz 1512798
+
 * Fri Aug 04 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.1.3-2
 - Disabled jemalloc on aarch64, as it fails reproducably
 - Disabled running make check. Too many timing issues. All tests run
