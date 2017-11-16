@@ -44,6 +44,7 @@ BuildRequires: jemalloc-devel
 BuildRequires: gcc
 BuildRequires: make
 BuildRequires: graphviz
+BuildRequires: nghttp2
 
 %if 0%{?rhel} == 6
 BuildRequires: selinux-policy
@@ -402,7 +403,11 @@ fi
 
 %changelog
 * Tue Nov 14 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.1.3-3
-- Security: Added patch for CVE-2017-8807, closing bz 1512798
+- Security: Added patch for CVE-2017-8807, closing bz 1512798, 1513523, 1513524
+- Disabled running make check again. Too many timing issues. All tests run
+  successfully on all arches from time to time, but seldom in a single
+  run while all redhat builders are loaded.
+
 
 * Fri Aug 04 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.1.3-2
 - Disabled jemalloc on aarch64, as it fails reproducably
