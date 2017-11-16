@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 5.0.0
-Release: 4%{?v_rc}%{?dist}
+Release: 5%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -26,7 +26,7 @@ Patch6:  varnish-4.1.0.fix_find-provides.patch
 Patch7:  varnish-5.0.0.fix_test_suite_on_secondary_arches.patch
 Patch8:  varnish-5.0.0.fix_reload.patch
 Patch9:  varnish-5.0.0.Correctly-handle-bogusly-large-chunk-sizes.patch
-
+Patch10: vsv00002-5.0.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %if 0%{?rhel} > 5
@@ -145,6 +145,7 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
+%patch10 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -408,8 +409,12 @@ fi
 %endif
 
 %changelog
+* Thu Nov 16 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.0.0-5
+- Security: Added patch for CVE-2017-8807, closing bz 1512798, 1513523, 1513524
+
 * Fri Aug 04 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.0.0-4
-- Updated patch for VSV00001, including test case
+- Security: Added patch for CVE-2017-12425, closing bz 1477698,
+  including test case
 
 * Wed Aug 02 2017 Patrick Uiterwijk <patrick@puiterwijk.org> - 5.0.0-2.1
 - Add patch for vsv00001
