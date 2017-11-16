@@ -17,7 +17,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 5.2.1
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -27,6 +27,7 @@ Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
+Patch10: vsv00002_test.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -43,6 +44,7 @@ BuildRequires: jemalloc-devel
 BuildRequires: gcc
 BuildRequires: make
 BuildRequires: graphviz
+BuildRequires: nghttp2
 
 %if 0%{?rhel} == 6
 BuildRequires: selinux-policy
@@ -138,6 +140,7 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch9 -p0
 %endif
 %patch6 -p0
+%patch10 -p0
 
 %build
 %if 0%{?rhel} == 6
@@ -400,9 +403,13 @@ fi
 %endif
 
 %changelog
+* Thu Nov 16 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.2.1-2
+- Added patch for vsv00002 on ppc64[le]
+- Added buildreq on nghttp2 for the test suite
+
 * Wed Nov 15 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.2.1-1
 - New upstream release. A security release
-  Includes fix for CVE-2017-8807, closes 1512798
+  Includes fix for CVE-2017-8807, closes 1512798, 1513523, 1513524
 
 * Mon Oct 23 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.2.0-2
 - Use ix86 macro for all ifarch matches of 32bit x86 hardware
