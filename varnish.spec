@@ -17,7 +17,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 5.2.1
-Release: 4%{?v_rc}%{?dist}
+Release: 4%{?v_rc}%{?dist}.1
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -406,6 +406,9 @@ fi
 %endif
 
 %changelog
+* Fri Feb 09 2018 Fedora Release Engineering <releng@fedoraproject.org> - 5.2.1-4.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
+
 * Thu Dec 21 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> - 5.2.1-4
 - Disabled pcre-jit on x86_64 and arm in rawhide for now. It does not
   work, and makes other varnish dependant packages crash
