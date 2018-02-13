@@ -29,7 +29,6 @@ Patch6:  varnish-4.1.0.fix_find-provides.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
 Patch10: vsv00002_test.patch
 
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %if 0%{?rhel} >= 6
 BuildRequires: python-sphinx
