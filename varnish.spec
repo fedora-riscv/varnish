@@ -253,9 +253,6 @@ make -f %{_datadir}/selinux/devel/Makefile
 install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name}/varnish4.pp
 %endif
 
-%clean
-rm -rf %{buildroot}
-
 %files
 %defattr(-,root,root,-)
 %{_sbindir}/*
