@@ -14,10 +14,17 @@
 %define commit1 5b976190ce9e0720f1eee6e9eaccd8a15eaa498d
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
+%bcond_without python2
+%bcond_with python3
+
+%if %{with python2} == %{with python3}
+%error Pick exactly one Python version
+%endif
+
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 5.2.1
-Release: 4%{?v_rc}%{?dist}.1
+Release: 5%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -26,14 +33,18 @@ Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.ta
 Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch6:  varnish-4.1.0.fix_find-provides.patch
+Patch8:  varnish-5.2.1-python3.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
 Patch10: vsv00002_test.patch
 
-
+%if %{with python3}
+BuildRequires: python3-sphinx, python3-docutils
+%else
 %if 0%{?rhel} >= 6
 BuildRequires: python-sphinx
 %endif
 BuildRequires: python-docutils
+%endif
 BuildRequires: ncurses-devel
 BuildRequires: groff
 BuildRequires: pcre-devel
@@ -104,7 +115,11 @@ Summary: Development files for %{name}-libs
 Group: Development/Libraries
 BuildRequires: ncurses-devel
 Requires: varnish-libs = %{version}-%{release}
+%if %{with python3}
+Requires: python3
+%else
 Requires: python
+%endif
 Provides: varnish-libs-devel = %{version}-%{release}
 Obsoletes: varnish-libs-devel
 
@@ -139,6 +154,7 @@ ln -s pkg-varnish-cache-%{commit1}/debian debian
 %patch9 -p0
 %endif
 %patch6 -p0
+%patch8 -p1
 %patch10 -p0
 
 %build
@@ -193,7 +209,11 @@ make %{?_smp_mflags} V=1
 sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishncsa.service
 
 # Explicit python, please
+%if %{with python2}
 sed -i 's/env python/python2/g;' lib/libvcc/vmodtool.py
+%else
+sed -i 's/env python/python3/g;' lib/libvcc/vmodtool.py
+%endif
 
 # Clean up the sphinx documentation
 rm -rf doc/sphinx/build/html/_sources
@@ -402,6 +422,9 @@ fi
 %endif
 
 %changelog
+* Wed Mar 28 2018 Joe Orton <jorton@redhat.com> - 5.2.1-5
+- add conditional build support for Python 3
+
 * Fri Feb 09 2018 Fedora Release Engineering <releng@fedoraproject.org> - 5.2.1-4.1
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
 
