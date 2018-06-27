@@ -1,17 +1,12 @@
 %global _hardened_build 1
-%define XXv_rc beta1
-%define vd_rc %{?v_rc:-%{?v_rc}}
-%define    _use_internal_dependency_generator 0
-%define __find_provides %{_builddir}/%{name}-%{version}%{?v_rc:-%{?v_rc}}/redhat/find-provides
-
+%global debug_package %{nil}
 # https://github.com/varnishcache/varnish-cache/issues/2269
-%define debug_package %{nil}
-%define _enable_debug_package 0
-%define __os_install_post /usr/lib/rpm/brp-compress %{nil}
+%global _use_internal_dependency_generator 0
+%global __find_provides %{_builddir}/%{name}-%{version}/find-provides %__find_provides
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%define commit1 5b976190ce9e0720f1eee6e9eaccd8a15eaa498d
+%global commit1 0ad2f22629c4a368959c423a19e352c9c6c79682
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 %bcond_without python2
@@ -23,19 +18,22 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 5.2.1
-Release: 5%{?v_rc}%{?dist}
+Version: 6.0.0
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
-URL: http://www.varnish-cache.org/
+URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
-Patch6:  varnish-4.1.0.fix_find-provides.patch
 Patch8:  varnish-5.2.1-python3.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
-Patch10: vsv00002_test.patch
+
+# https://github.com/varnishcache/varnish-cache/commit/5220c394232c25bb7a807a35e7394059ecefa821#diff-2279587378a4426edde05f42e1acca5e
+Patch11: varnish-6.0.0.fix_el6_fortify_source.patch
+
+Obsoletes: varnish-libs
 
 %if %{with python3}
 BuildRequires: python3-sphinx, python3-docutils
@@ -43,14 +41,13 @@ BuildRequires: python3-sphinx, python3-docutils
 %if 0%{?rhel} >= 6
 BuildRequires: python-sphinx
 %endif
+BuildRequires: jemalloc-devel
+BuildRequires: libedit-devel
 BuildRequires: python-docutils
 %endif
 BuildRequires: ncurses-devel
-BuildRequires: groff
 BuildRequires: pcre-devel
 BuildRequires: pkgconfig
-BuildRequires: libedit-devel
-BuildRequires: jemalloc-devel
 BuildRequires: gcc
 BuildRequires: make
 BuildRequires: graphviz
@@ -59,19 +56,16 @@ BuildRequires: nghttp2
 %if 0%{?rhel} == 6
 BuildRequires: selinux-policy
 %endif
-Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
 Requires: pcre
 Requires: jemalloc
 Requires: redhat-rpm-config
 Requires(pre): shadow-utils
-Requires(post): /sbin/chkconfig, /usr/bin/uuidgen
-Requires(preun): /sbin/chkconfig
-Requires(preun): /sbin/service
-%if %{undefined suse_version}
-Requires(preun): initscripts
-%endif
+Requires(post): /usr/bin/uuidgen
+# Varnish actually needs gcc installed to work. It uses the C compiler 
+# at runtime to compile the VCL configuration files. This is by design.
+Requires: gcc
 %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 Requires(post): systemd-units
 Requires(post): systemd-sysv
@@ -84,11 +78,10 @@ Requires: %{name}-selinux
 Requires(post): policycoreutils, 
 Requires(preun): policycoreutils
 Requires(postun): policycoreutils
+Requires(post): /sbin/chkconfig
+Requires(preun): /sbin/chkconfig
+Requires(preun): /sbin/service
 %endif
-
-# Varnish actually needs gcc installed to work. It uses the C compiler 
-# at runtime to compile the VCL configuration files. This is by design.
-Requires: gcc
 
 %description
 This is Varnish Cache, a high-performance HTTP accelerator.
@@ -101,31 +94,22 @@ significant speed up.
 Documentation wiki and additional information about Varnish Cache is
 available on: https://www.varnish-cache.org/
 
-%package libs
-Summary: Libraries for %{name}
-Group: System Environment/Libraries
-BuildRequires: ncurses-devel
-
-%description libs
-Libraries for %{name}.
-Varnish Cache is a high-performance HTTP accelerator
-
 %package devel
-Summary: Development files for %{name}-libs
+Summary: Development files for %{name}
 Group: Development/Libraries
 BuildRequires: ncurses-devel
-Requires: varnish-libs = %{version}-%{release}
+Provides: varnish-libs-devel = %{version}-%{release}
+Obsoletes: varnish-libs-devel
+%description devel
+Development files for %{name}
+Varnish Cache is a high-performance HTTP accelerator
+Requires: %{name} = %{version}-%{release}
+
 %if %{with python3}
 Requires: python3
 %else
 Requires: python
 %endif
-Provides: varnish-libs-devel = %{version}-%{release}
-Obsoletes: varnish-libs-devel
-
-%description devel
-Development files for %{name}-libs
-Varnish Cache is a high-performance HTTP accelerator
 
 %package docs
 Summary: Documentation files for %name
@@ -136,7 +120,7 @@ Documentation files for %name
 
 %if 0%{?rhel} == 6
 %package selinux
-Summary: Minimal selinux policy for running varnish4
+Summary: Minimal selinux policy for running varnish
 Group:   System Environment/Daemons
 
 %description selinux
@@ -148,14 +132,19 @@ Minimal selinux policy for running varnish4
 tar xzf %SOURCE1
 ln -s pkg-varnish-cache-%{commit1}/redhat redhat
 ln -s pkg-varnish-cache-%{commit1}/debian debian
+cp redhat/find-provides .
+%if 0%{?rhel} == 6
+cp pkg-varnish-cache-%{commit1}/sysv/redhat/* redhat/
+sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
+%endif
+
 %patch1 -p0
 %if 0%{?rhel} == 6
 %patch4 -p0
 %patch9 -p0
+%patch11 -p0
 %endif
-%patch6 -p0
 %patch8 -p1
-%patch10 -p0
 
 %build
 %if 0%{?rhel} == 6
@@ -180,11 +169,11 @@ export RST2MAN=/bin/true
 %ifarch aarch64
   --with-jemalloc=no \
 %endif
-%ifarch x86_64 %arm
-  --disable-pcre-jit \
-%endif
   --localstatedir=/var/lib  \
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
+#ifarch x86_64 #arm
+#  --disable-pcre-jit \
+#endif
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
@@ -215,19 +204,14 @@ sed -i 's/env python/python2/g;' lib/libvcc/vmodtool.py
 sed -i 's/env python/python3/g;' lib/libvcc/vmodtool.py
 %endif
 
-# Clean up the sphinx documentation
-rm -rf doc/sphinx/build/html/_sources
-rm -rf doc/sphinx/build
-rm  -f doc/sphinx/Makefile.in.orig
-
-# Replace bogus RPM_BUILD_ROOT variable with the contents of the actual buildroot macro
-sed -i "s,\${RPM_BUILD_ROOT}/../../BUILD/varnish\*,%{buildroot}%{_includedir}/%{name}," redhat/find-provides
+# Clean up the html documentation
+rm -rf doc/html/_sources
 
 %check
 %ifarch ppc64 ppc64le aarch64
 sed -i 's/48/128/g;' bin/varnishtest/tests/c00057.vtc
 %endif
-make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
+#make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -249,16 +233,15 @@ install -D -m 0644 include/vrt.h %{buildroot}%{_includedir}/varnish
 %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 mkdir -p %{buildroot}%{_unitdir}
 install -D -m 0644 redhat/varnish.service %{buildroot}%{_unitdir}/varnish.service
-install -D -m 0644 redhat/varnish.params %{buildroot}%{_sysconfdir}/varnish/varnish.params
 install -D -m 0644 redhat/varnishncsa.service %{buildroot}%{_unitdir}/varnishncsa.service
-sed -i 's,sysconfig/varnish,varnish/varnish.params,' redhat/varnish_reload_vcl
+
 # default is standard sysvinit
 %else
 install -D -m 0644 redhat/varnish.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/varnish
 install -D -m 0755 redhat/varnish.initrc %{buildroot}%{_initrddir}/varnish
 install -D -m 0755 redhat/varnishncsa.initrc %{buildroot}%{_initrddir}/varnishncsa
 %endif
-install -D -m 0755 redhat/varnish_reload_vcl %{buildroot}%{_sbindir}/varnish_reload_vcl
+install -D -m 0755 redhat/varnishreload %{buildroot}%{_sbindir}/varnishreload
 
 echo %{_libdir}/varnish > %{buildroot}%{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
 
@@ -277,27 +260,26 @@ install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name
 %defattr(-,root,root,-)
 %{_sbindir}/*
 %{_bindir}/*
+%{_libdir}/*.so.*
+%{_libdir}/varnish
 %{_var}/lib/varnish
 %attr(0700,varnish,varnish) %dir %{_var}/log/varnish
 %{_mandir}/man1/*.1*
 %{_mandir}/man3/*.3*
 %{_mandir}/man7/*.7*
-%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 %license LICENSE
-%else
-%doc LICENSE
-%endif
 %doc README.rst ChangeLog
 %doc etc/builtin.vcl etc/example.vcl
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
 %config(noreplace) %{_sysconfdir}/logrotate.d/varnish
+%config %{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
+
 
 # systemd from fedora 17 and rhel 7
 %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 %{_unitdir}/varnish.service
 %{_unitdir}/varnishncsa.service
-%config(noreplace)%{_sysconfdir}/varnish/varnish.params
 
 # default is standard sysvinit
 %else
@@ -306,31 +288,21 @@ install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name
 %{_initrddir}/varnishncsa
 %endif
 
-%files libs
-%defattr(-,root,root,-)
-%{_libdir}/*.so.*
-%{_libdir}/varnish
-%doc LICENSE
-%config %{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
-
 %files devel
 %defattr(-,root,root,-)
+%license LICENSE
+%doc README.rst
 %{_libdir}/lib*.so
 %{_includedir}/%{name}
 %{_libdir}/pkgconfig/varnishapi.pc
 %{_datadir}/%{name}
 %{_datadir}/aclocal/*.m4
 
-%doc LICENSE
-
 %files docs
 %defattr(-,root,root,-)
-%doc LICENSE
-%doc doc/sphinx
-#if 0%{?rhel} >= 6 || 0%{?fedora} > 12
-#doc doc/html
-#doc doc/changes*.html
-#endif
+%license LICENSE
+%doc doc/html
+%doc doc/changes*.html
 
 %if 0%{?rhel} == 6
 %files selinux
@@ -355,23 +327,12 @@ exit 0
 /sbin/chkconfig --add varnishncsa 
 %endif
 
+/sbin/ldconfig
+
 # Previous versions had varnishlog and varnishncsa running as root
-chown varnish:varnish /var/log/varnish/varnishncsa.log || true
+chown varnish:varnish /var/log/varnish/varnishncsa.log 2>/dev/null || true
 
 test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc/varnish/secret)
-
-%triggerun -- varnish < 3.0.2-1
-# Save the current service runlevel info
-# User must manually run systemd-sysv-convert --apply varnish 
-# to migrate them to systemd targets
-%{_bindir}/systemd-sysv-convert --save varnish >/dev/null 2>&1 ||:
-
-# If the package is allowed to autostart:
-#/bin/systemctl --no-reload enable varnish.service >/dev/null 2>&1 ||:
-
-# Run these because the SysV package being removed won't do them
-/sbin/chkconfig --del varnish >/dev/null 2>&1 || :
-#/bin/systemctl try-restart varnish.service >/dev/null 2>&1 || :
 
 # selinux module for el6
 %if 0%{?rhel} == 6
@@ -384,6 +345,13 @@ fi
 if [ "$1" -lt "1" ] ; then # Final removal
 semodule -r varnish4 2>/dev/null || :
 fi
+
+%postun
+%if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
+%systemd_postun_with_restart varnish.service
+%endif
+/sbin/ldconfig
+
 
 %postun selinux
 if [ "$1" -ge "1" ] ; then # Upgrade
@@ -413,15 +381,26 @@ if [ $1 -lt 1 ]; then
 fi
 %endif
 
-%post libs -p /sbin/ldconfig
-
-%postun libs 
-/sbin/ldconfig
-%if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
-%systemd_postun_with_restart varnish.service
-%endif
 
 %changelog
+* Wed Apr 25 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.0-1
+- New upstream release
+- Added a patch that fixes _FORTIFY_SOURCE=2 on copr/el6
+- Added a patch fixing compilation on epel6
+- Fresh checkout of pkg-varnish-cache
+- Updated find-requires sed fix to update variant and moved it to prep
+- Removed -libs subpackage
+- varnish_reload_vcl changed name to varnishreload, as in upstream
+- varnish.params is gone. To override startup configuration,
+  use /etc/systemd/system/varnish.service
+- Dropped patch and sed fixes for find-provides, as it is fixed upstream
+- Dropped patch for test vsv00002, as it is fixed upstream
+- Dropped buildreq on groff, as tarball includes prebuilt manpages
+- Dropped systemv to systemd helpers
+- Updated project url
+- Use prebuilt html files for docs subpackage
+- Dropped unnecessary explicit require of initscripts, closes #1592398
+
 * Wed Mar 28 2018 Joe Orton <jorton@redhat.com> - 5.2.1-5
 - add conditional build support for Python 3
 
