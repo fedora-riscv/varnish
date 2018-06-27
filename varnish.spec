@@ -27,7 +27,6 @@ Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
-Patch8:  varnish-5.2.1-python3.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
 
 # https://github.com/varnishcache/varnish-cache/commit/5220c394232c25bb7a807a35e7394059ecefa821#diff-2279587378a4426edde05f42e1acca5e
@@ -144,7 +143,6 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch9 -p0
 %patch11 -p0
 %endif
-%patch8 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -211,7 +209,7 @@ rm -rf doc/html/_sources
 %ifarch ppc64 ppc64le aarch64
 sed -i 's/48/128/g;' bin/varnishtest/tests/c00057.vtc
 %endif
-#make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
+make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -395,6 +393,7 @@ fi
   use /etc/systemd/system/varnish.service
 - Dropped patch and sed fixes for find-provides, as it is fixed upstream
 - Dropped patch for test vsv00002, as it is fixed upstream
+- Droppet patch for python3, as it is included upstream
 - Dropped buildreq on groff, as tarball includes prebuilt manpages
 - Dropped systemv to systemd helpers
 - Updated project url
