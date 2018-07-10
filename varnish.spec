@@ -255,7 +255,6 @@ install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name
 %endif
 
 %files
-%defattr(-,root,root,-)
 %{_sbindir}/*
 %{_bindir}/*
 %{_libdir}/*.so.*
@@ -287,7 +286,6 @@ install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name
 %endif
 
 %files devel
-%defattr(-,root,root,-)
 %license LICENSE
 %doc README.rst
 %{_libdir}/lib*.so
@@ -297,14 +295,12 @@ install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name
 %{_datadir}/aclocal/*.m4
 
 %files docs
-%defattr(-,root,root,-)
 %license LICENSE
 %doc doc/html
 %doc doc/changes*.html
 
 %if 0%{?rhel} == 6
 %files selinux
-%defattr(-,root,root,-)
 %{_datadir}/selinux/packages/%{name}/varnish4.pp
 %endif
 
