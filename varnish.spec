@@ -19,7 +19,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.0.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -377,6 +377,9 @@ fi
 
 
 %changelog
+* Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 6.0.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
 * Wed Apr 25 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.0-1
 - New upstream release
 - Added a patch that fixes _FORTIFY_SOURCE=2 on copr/el6
