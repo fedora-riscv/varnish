@@ -41,9 +41,9 @@ BuildRequires: python3-sphinx, python3-docutils
 BuildRequires: python-sphinx
 %endif
 BuildRequires: jemalloc-devel
-BuildRequires: libedit-devel
 BuildRequires: python-docutils
 %endif
+BuildRequires: libedit-devel
 BuildRequires: ncurses-devel
 BuildRequires: pcre-devel
 BuildRequires: pkgconfig
