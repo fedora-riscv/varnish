@@ -18,8 +18,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.0.0
-Release: 2%{?dist}
+Version: 6.1.0
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -377,6 +377,9 @@ fi
 
 
 %changelog
+* Mon Oct 08 2018 Lubos Uhliarik <luhliari@redhat.com> - 6.1.0-1
+- new version 6.1.0 (#1633338)
+
 * Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 6.0.0-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
 
