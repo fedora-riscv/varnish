@@ -18,8 +18,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.0.0
-Release: 2%{?dist}
+Version: 6.0.1
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -29,13 +29,17 @@ Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
 
-# https://github.com/varnishcache/varnish-cache/commit/5220c394232c25bb7a807a35e7394059ecefa821#diff-2279587378a4426edde05f42e1acca5e
-Patch11: varnish-6.0.0.fix_el6_fortify_source.patch
+# based on https://github.com/varnishcache/varnish-cache/commit/9bdc5f75d661a1659c4df60799612a7524a6caa7
+Patch12: varnish-6.0.1_fix_bug2668.patch
 
 Obsoletes: varnish-libs
 
 %if %{with python3}
+%if 0%{?rhel} == 6
+BuildRequires: python34-docutils
+%else
 BuildRequires: python3-sphinx, python3-docutils
+%endif
 %else
 %if 0%{?rhel} >= 6
 BuildRequires: python-sphinx
@@ -49,7 +53,6 @@ BuildRequires: pcre-devel
 BuildRequires: pkgconfig
 BuildRequires: gcc
 BuildRequires: make
-BuildRequires: graphviz
 BuildRequires: nghttp2
 
 %if 0%{?rhel} == 6
@@ -105,7 +108,11 @@ Varnish Cache is a high-performance HTTP accelerator
 Requires: %{name} = %{version}-%{release}
 
 %if %{with python3}
+%if 0%{?rhel} == 6
+Requires: python34
+%else
 Requires: python3
+%endif
 %else
 Requires: python
 %endif
@@ -141,8 +148,8 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %if 0%{?rhel} == 6
 %patch4 -p0
 %patch9 -p0
-%patch11 -p0
 %endif
+%patch12 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -156,12 +163,15 @@ export LDFLAGS=" -pie"
 export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
 %endif
 %if 0%{?rhel} >= 6
-export CFLAGS="%{optflags} -fPIC -ffloat-store"
+export CFLAGS="%{optflags} -fno-exceptions -fPIC -ffloat-store"
 %endif
 %endif
 
 # Man pages are prebuilt. No need to regenerate them.
 export RST2MAN=/bin/true
+%if %{with python3}
+export PYTHON=/usr/bin/python3
+%endif
 
 %configure --disable-static \
 %ifarch aarch64
@@ -184,10 +194,12 @@ pushd lib/libvarnishapi/.libs
 ln -s libvarnishapi.so libvarnishapi.so.1
 popd
 
-# Upstream github issue #2265
 %if 0%{?rhel} == 6 
+# Upstream github issue #22650
 sed -i 's/-Werror$//g;' bin/varnishd/Makefile
 sed -i 's/-Werror$//g;' lib/libvarnishapi/Makefile
+# Workaround old readline/curses, ref upstream github issue #2550
+sed -i 's/vcl1/ vcl1/;' bin/varnishtest/tests/u00011.vtc
 %endif
 
 make %{?_smp_mflags} V=1 
@@ -377,6 +389,14 @@ fi
 
 
 %changelog
+* Thu Sep 27 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-1
+- New upstream release
+- Removed graphciz from BuildRequires. It is not used
+- Removed patch for fortify_source on el6. It is merged upstream
+- Small workaround for test suite problem with old readline/curses on el6
+- Now fully using  bcond_with python3, for simpler future deprication of python2
+- Added -fno-exceptions to CFLAGS on el6, see upstream issue #2793
+
 * Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 6.0.0-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
 
