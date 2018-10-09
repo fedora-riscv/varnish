@@ -9,17 +9,10 @@
 %global commit1 0ad2f22629c4a368959c423a19e352c9c6c79682
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
-%bcond_without python2
-%bcond_with python3
-
-%if %{with python2} == %{with python3}
-%error Pick exactly one Python version
-%endif
-
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.0.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -34,20 +27,13 @@ Patch12: varnish-6.0.1_fix_bug2668.patch
 
 Obsoletes: varnish-libs
 
-%if %{with python3}
 %if 0%{?rhel} == 6
-BuildRequires: python34-docutils
+BuildRequires: python-sphinx python34-docutils
 %else
 BuildRequires: python3-sphinx, python3-docutils
 %endif
-%else
-%if 0%{?rhel} >= 6
-BuildRequires: python-sphinx
-%endif
 BuildRequires: jemalloc-devel
 BuildRequires: libedit-devel
-BuildRequires: python-docutils
-%endif
 BuildRequires: ncurses-devel
 BuildRequires: pcre-devel
 BuildRequires: pkgconfig
@@ -107,14 +93,10 @@ Development files for %{name}
 Varnish Cache is a high-performance HTTP accelerator
 Requires: %{name} = %{version}-%{release}
 
-%if %{with python3}
 %if 0%{?rhel} == 6
 Requires: python34
 %else
 Requires: python3
-%endif
-%else
-Requires: python
 %endif
 
 %package docs
@@ -169,9 +151,8 @@ export CFLAGS="%{optflags} -fno-exceptions -fPIC -ffloat-store"
 
 # Man pages are prebuilt. No need to regenerate them.
 export RST2MAN=/bin/true
-%if %{with python3}
+# Explicit python, please
 export PYTHON=/usr/bin/python3
-%endif
 
 %configure --disable-static \
 %ifarch aarch64
@@ -208,11 +189,8 @@ make %{?_smp_mflags} V=1
 sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishncsa.service
 
 # Explicit python, please
-%if %{with python2}
-sed -i 's/env python/python2/g;' lib/libvcc/vmodtool.py
-%else
-sed -i 's/env python/python3/g;' lib/libvcc/vmodtool.py
-%endif
+sed -i 's,env python,python3,;' lib/libvcc/vmodtool.py
+sed -i 's,env python,python3,;' lib/libvcc/vsctool.py
 
 # Clean up the html documentation
 rm -rf doc/html/_sources
@@ -225,6 +203,12 @@ make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%
 
 %install
 rm -rf %{buildroot}
+
+# el6 defaults to LANG=C, which makes python3 fail on utf8
+%if 0%{?rhel} == 6
+export LANG=en_US.UTF-8
+%endif
+
 make install DESTDIR=%{buildroot} INSTALL="install -p"
 
 # None of these for fedora
@@ -389,12 +373,16 @@ fi
 
 
 %changelog
+* Tue Oct 09 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-2
+- Explicitly using python3 on all targets
+- Explicitly using utf8 under install on el6 for python quirks
+
 * Thu Sep 27 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-1
 - New upstream release
 - Removed graphciz from BuildRequires. It is not used
 - Removed patch for fortify_source on el6. It is merged upstream
 - Small workaround for test suite problem with old readline/curses on el6
-- Now fully using  bcond_with python3, for simpler future deprication of python2
+- Supports bcond_with python3, for simpler future deprication of python2
 - Added -fno-exceptions to CFLAGS on el6, see upstream issue #2793
 
 * Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 6.0.0-2
