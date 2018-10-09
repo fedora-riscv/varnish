@@ -12,7 +12,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.0.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -27,7 +27,7 @@ Patch12: varnish-6.0.1_fix_bug2668.patch
 
 Obsoletes: varnish-libs
 
-%if 0%{?rhel} == 6
+%if 0%{?rhel} ==6 || 0%{?rhel} == 7
 BuildRequires: python-sphinx python34-docutils
 %else
 BuildRequires: python3-sphinx, python3-docutils
@@ -204,8 +204,8 @@ make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%
 %install
 rm -rf %{buildroot}
 
-# el6 defaults to LANG=C, which makes python3 fail on utf8
-%if 0%{?rhel} == 6
+# el6 and el7 defaults to LANG=C, which makes python3 fail on utf8
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
 export LANG=en_US.UTF-8
 %endif
 
@@ -373,9 +373,11 @@ fi
 
 
 %changelog
+* Tue Oct 09 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-3
+- Explicitly using utf8 under install on el6 and el7 for python quirks
+
 * Tue Oct 09 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-2
 - Explicitly using python3 on all targets
-- Explicitly using utf8 under install on el6 for python quirks
 
 * Thu Sep 27 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-1
 - New upstream release
