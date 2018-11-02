@@ -11,19 +11,22 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.0.1
-Release: 3%{?dist}
+Version: 6.1.0
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
-Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
+Patch1:  varnish-6.1.0_fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
 
 # based on https://github.com/varnishcache/varnish-cache/commit/9bdc5f75d661a1659c4df60799612a7524a6caa7
 Patch12: varnish-6.0.1_fix_bug2668.patch
+
+# Just a simple formatting error
+Patch13: varnish-6.1.0_fix_testu00008.patch
 
 Obsoletes: varnish-libs
 
@@ -132,6 +135,7 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch9 -p0
 %endif
 %patch12 -p1
+%patch13 -p0
 
 %build
 %if 0%{?rhel} == 6
@@ -159,10 +163,9 @@ export PYTHON=/usr/bin/python3
   --with-jemalloc=no \
 %endif
   --localstatedir=/var/lib  \
-  --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
-#ifarch x86_64 #arm
-#  --disable-pcre-jit \
-#endif
+  --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}} \
+  --disable-pcre-jit \
+
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
@@ -373,6 +376,11 @@ fi
 
 
 %changelog
+* Fri Nov 02 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.0-1
+- New upstream release
+- Respin patches for 6.1.0
+- Disable pcre-jit for now, ref upstream bug #2817
+
 * Tue Oct 09 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-3
 - Explicitly using utf8 under install on el6 and el7 for python quirks
 
