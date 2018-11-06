@@ -1,8 +1,17 @@
 %global _hardened_build 1
-%global debug_package %{nil}
+
 # https://github.com/varnishcache/varnish-cache/issues/2269
+%global debug_package %{nil}
+
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
 %global _use_internal_dependency_generator 0
 %global __find_provides %{_builddir}/%{name}-%{version}/find-provides %__find_provides
+%endif
+
+%global __provides_exclude_from ^%{_libdir}/varnish/vmods
+
+%global abi 4684c38ecfc194b4f3b5b81594832dbb197a3bb9
+%global vrt 8.0
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
@@ -12,7 +21,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.1.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -28,9 +37,23 @@ Patch12: varnish-6.0.1_fix_bug2668.patch
 # Just a simple formatting error
 Patch13: varnish-6.1.0_fix_testu00008.patch
 
+%if 0%{?fedora} > 29
+Provides: varnish%{_isa} = %{version}-%{release}
+Provides: varnishd(abi)%{_isa} = %{abi}
+Provides: varnishd(vrt)%{_isa} = %{vrt}
+
+Provides: vmod(blob)%{_isa} = %{version}-%{release}
+Provides: vmod(directors)%{_isa} = %{version}-%{release}
+Provides: vmod(proxy)%{_isa} = %{version}-%{release}
+Provides: vmod(purge)%{_isa} = %{version}-%{release}
+Provides: vmod(std)%{_isa} = %{version}-%{release}
+Provides: vmod(unix)%{_isa} = %{version}-%{release}
+Provides: vmod(vtc)%{_isa} = %{version}-%{release}
+%endif
+
 Obsoletes: varnish-libs
 
-%if 0%{?rhel} ==6 || 0%{?rhel} == 7
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
 BuildRequires: python-sphinx python34-docutils
 %else
 BuildRequires: python3-sphinx, python3-docutils
@@ -91,6 +114,7 @@ Group: Development/Libraries
 BuildRequires: ncurses-devel
 Provides: varnish-libs-devel = %{version}-%{release}
 Obsoletes: varnish-libs-devel
+
 %description devel
 Development files for %{name}
 Varnish Cache is a high-performance HTTP accelerator
@@ -376,6 +400,10 @@ fi
 
 
 %changelog
+* Tue Nov 06 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.0-3
+- Dropped the depricated external dependency generator in Fedora
+- Hard coded vmod, abi and vrt provides
+
 * Fri Nov 02 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.0-2
 - Added a patch to fix a failing test in the testsuite
 
