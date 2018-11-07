@@ -21,7 +21,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.1.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -400,6 +400,9 @@ fi
 
 
 %changelog
+* Wed Nov 07 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-2
+- Respun ld_library_path patch for varnish-6.1.1
+
 * Wed Nov 07 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-1
 - New upstream release
 
