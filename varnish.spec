@@ -20,14 +20,14 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.1.0
-Release: 3%{?dist}
+Version: 6.1.1
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
-Patch1:  varnish-6.1.0_fix_ld_library_path_in_doc_build.patch
+Patch1:  varnish-6.1.1_fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
 
@@ -158,7 +158,7 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch4 -p0
 %patch9 -p0
 %endif
-%patch12 -p1
+#patch12 -p1
 %patch13 -p0
 
 %build
@@ -400,6 +400,9 @@ fi
 
 
 %changelog
+* Wed Nov 07 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-1
+- New upstream release
+
 * Tue Nov 06 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.0-3
 - Dropped the depricated external dependency generator in Fedora
 - Hard coded vmod, abi and vrt provides
