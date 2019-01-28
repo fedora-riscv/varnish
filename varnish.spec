@@ -23,7 +23,6 @@ Name: varnish
 Version: 6.1.1
 Release: 2%{?dist}
 License: BSD
-Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
@@ -110,7 +109,6 @@ available on: https://www.varnish-cache.org/
 
 %package devel
 Summary: Development files for %{name}
-Group: Development/Libraries
 BuildRequires: ncurses-devel
 Provides: varnish-libs-devel = %{version}-%{release}
 Obsoletes: varnish-libs-devel
@@ -128,7 +126,6 @@ Requires: python3
 
 %package docs
 Summary: Documentation files for %name
-Group: Documentation
 
 %description docs
 Documentation files for %name
@@ -136,7 +133,6 @@ Documentation files for %name
 %if 0%{?rhel} == 6
 %package selinux
 Summary: Minimal selinux policy for running varnish
-Group:   System Environment/Daemons
 
 %description selinux
 Minimal selinux policy for running varnish4
