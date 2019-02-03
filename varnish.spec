@@ -21,7 +21,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.1.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -396,6 +396,9 @@ fi
 
 
 %changelog
+* Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 6.1.1-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
 * Wed Nov 07 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-2
 - Respun ld_library_path patch for varnish-6.1.1
 
