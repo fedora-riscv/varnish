@@ -21,7 +21,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.1.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -35,6 +35,9 @@ Patch12: varnish-6.0.1_fix_bug2668.patch
 
 # Just a simple formatting error
 Patch13: varnish-6.1.0_fix_testu00008.patch
+
+# Another formatting error fixed upstream
+Patch14: varnish-6.1.1_fix_upstrbug_2879.patch
 
 %if 0%{?fedora} > 29
 Provides: varnish%{_isa} = %{version}-%{release}
@@ -156,6 +159,7 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %endif
 #patch12 -p1
 %patch13 -p0
+%patch14 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -396,6 +400,9 @@ fi
 
 
 %changelog
+* Thu Feb 14 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-4
+- Adding a patch from upstream fixing a simple formatting bug on gcc-9
+
 * Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 6.1.1-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
 
