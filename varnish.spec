@@ -219,7 +219,7 @@ rm -rf doc/html/_sources
 %ifarch ppc64 ppc64le aarch64
 sed -i 's/48/128/g;' bin/varnishtest/tests/c00057.vtc
 %endif
-#make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
+make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
 
 %install
 rm -rf %{buildroot}
