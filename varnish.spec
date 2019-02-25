@@ -1,8 +1,17 @@
 %global _hardened_build 1
-%global debug_package %{nil}
+
 # https://github.com/varnishcache/varnish-cache/issues/2269
+%global debug_package %{nil}
+
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
 %global _use_internal_dependency_generator 0
 %global __find_provides %{_builddir}/%{name}-%{version}/find-provides %__find_provides
+%endif
+
+%global __provides_exclude_from ^%{_libdir}/varnish/vmods
+
+%global abi 0458b54db26cfbea79af45ca5c4767c7c2925a91
+%global vrt 7.0
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
@@ -12,7 +21,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.0.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -22,9 +31,23 @@ Patch1:  varnish-6.0.2.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
 
+%if 0%{?fedora} > 29
+Provides: varnish%{_isa} = %{version}-%{release}
+Provides: varnishd(abi)%{_isa} = %{abi}
+Provides: varnishd(vrt)%{_isa} = %{vrt}
+
+Provides: vmod(blob)%{_isa} = %{version}-%{release}
+Provides: vmod(directors)%{_isa} = %{version}-%{release}
+Provides: vmod(proxy)%{_isa} = %{version}-%{release}
+Provides: vmod(purge)%{_isa} = %{version}-%{release}
+Provides: vmod(std)%{_isa} = %{version}-%{release}
+Provides: vmod(unix)%{_isa} = %{version}-%{release}
+Provides: vmod(vtc)%{_isa} = %{version}-%{release}
+%endif
+
 Obsoletes: varnish-libs
 
-%if 0%{?rhel} ==6 || 0%{?rhel} == 7
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
 BuildRequires: python-sphinx python34-docutils
 %else
 BuildRequires: python3-sphinx, python3-docutils
@@ -85,6 +108,7 @@ Group: Development/Libraries
 BuildRequires: ncurses-devel
 Provides: varnish-libs-devel = %{version}-%{release}
 Obsoletes: varnish-libs-devel
+
 %description devel
 Development files for %{name}
 Varnish Cache is a high-performance HTTP accelerator
@@ -195,7 +219,7 @@ rm -rf doc/html/_sources
 %ifarch ppc64 ppc64le aarch64
 sed -i 's/48/128/g;' bin/varnishtest/tests/c00057.vtc
 %endif
-make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
+#make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
 
 %install
 rm -rf %{buildroot}
@@ -369,9 +393,14 @@ fi
 
 
 %changelog
+* Tue Nov 26 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.2-2
+- Dropped the depricated external dependency generator in Fedora
+- Hard coded vmod, abi and vrt provides
+
 * Mon Nov 26 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.2-1
 - New upstream release
 - Respun necessary patches for varnish-6.0.2
+- Dropped patches merged upstream
 
 * Tue Oct 09 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-3
 - Explicitly using utf8 under install on el6 and el7 for python quirks
