@@ -10,7 +10,7 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 0458b54db26cfbea79af45ca5c4767c7c2925a91
+%global abi 7d1ded3aa033a018317dbafc61587026ea2ef8a3
 %global vrt 7.0
 
 # Package scripts are now external
@@ -20,8 +20,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.0.2
-Release: 2%{?dist}
+Version: 6.0.3
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -30,8 +30,9 @@ Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.ta
 Patch1:  varnish-6.0.2.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
+Patch13: varnish-6.0.3.fix_upstream_issue_2879.patch
 
-%if 0%{?fedora} > 29
+%if 0%{?fedora} > 28
 Provides: varnish%{_isa} = %{version}-%{release}
 Provides: varnishd(abi)%{_isa} = %{abi}
 Provides: varnishd(vrt)%{_isa} = %{vrt}
@@ -152,6 +153,7 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch4 -p0
 %patch9 -p0
 %endif
+%patch13 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -393,7 +395,11 @@ fi
 
 
 %changelog
-* Tue Nov 26 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.2-2
+* Mon Feb 25 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.3-1
+- New upstream release
+- Added a patch from upstream fixing a compile error on gcc9
+
+* Tue Nov 27 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.2-2
 - Dropped the depricated external dependency generator in Fedora
 - Hard coded vmod, abi and vrt provides
 
