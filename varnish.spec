@@ -15,12 +15,12 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 4.1.8
+Version: 4.1.11
 Release: 1%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
-Source0: http://repo.varnish-cache.org/source/%{name}-%{version}%{?vd_rc}.tar.gz
+Source0: https://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 Patch1:  varnish-4.1.1.fix_ld_library_path_in_sphinx_build.patch
 Patch2:  varnish-4.1.3_fix_Werror_el6.patch
@@ -416,6 +416,14 @@ fi
 %endif
 
 %changelog
+* Tue Feb 26 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.11-1
+- New upstream release
+- New source url
+
+* Mon Nov 27 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.9-1
+- New upstream release
+- New source url
+
 * Thu Aug 03 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.1.8-1
 - New upstream release, including fix for security bug VSV00001
   closes #1477698, #1477222
