@@ -21,7 +21,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.1.1
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -38,6 +38,9 @@ Patch13: varnish-6.1.0_fix_testu00008.patch
 
 # Another formatting error fixed upstream
 Patch14: varnish-6.1.1_fix_upstrbug_2879.patch
+
+# pcre-jit fixed upstream, issue #2912
+Patch15: varnish-6.1.1_fix_issue_2912.patch
 
 %if 0%{?fedora} > 29
 Provides: varnish%{_isa} = %{version}-%{release}
@@ -160,6 +163,7 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 #patch12 -p1
 %patch13 -p0
 %patch14 -p1
+%patch15 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -188,7 +192,7 @@ export PYTHON=/usr/bin/python3
 %endif
   --localstatedir=/var/lib  \
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}} \
-  --disable-pcre-jit \
+#  --disable-pcre-jit \
 
 
 # We have to remove rpath - not allowed in Fedora
@@ -400,6 +404,10 @@ fi
 
 
 %changelog
+* Thu Mar 07 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-5
+- Adding a patch based on upstream commits, fixing pcre-jit, see 
+  upstream bug 2912
+
 * Thu Feb 14 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-4
 - Adding a patch from upstream fixing a simple formatting bug on gcc-9
 
