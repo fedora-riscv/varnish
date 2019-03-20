@@ -6,41 +6,59 @@
 %if 0%{?rhel} == 6 || 0%{?rhel} == 7
 %global _use_internal_dependency_generator 0
 %global __find_provides %{_builddir}/%{name}-%{version}/find-provides %__find_provides
+%global __python /usr/bin/python3.4
+%else
+%global __python %{__python3}
 %endif
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 4684c38ecfc194b4f3b5b81594832dbb197a3bb9
-%global vrt 8.0
+%global abi b14a3d38dbe918ad50d3838b11aa596f42179b54
+%global vrt 9.0
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%global commit1 0ad2f22629c4a368959c423a19e352c9c6c79682
+%global commit1 114fcddfdbd9f1177f34605bb86faa78859ae56a
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.1.1
-Release: 5%{?dist}
+Version: 6.2.0
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
+
+# Patches:
+# Patch  001: Because of Fedora's libtool no-rpath requirement, it is still
+#             necessary to add LD_LIBRARY_PATH when building the documentation
 Patch1:  varnish-6.1.1_fix_ld_library_path_in_doc_build.patch
+
+# Patch  004: varnish selinux support for el6
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
-Patch9:  varnish-5.1.1.fix_python_version.patch
 
-# based on https://github.com/varnishcache/varnish-cache/commit/9bdc5f75d661a1659c4df60799612a7524a6caa7
-Patch12: varnish-6.0.1_fix_bug2668.patch
+# Patch  009: Hard code older python support in configure for older el releases
+#Patch9:  varnish-5.1.1.fix_python_version.patch
 
-# Just a simple formatting error
-Patch13: varnish-6.1.0_fix_testu00008.patch
+# Patch  012: Fix test for variants of ncurses, based on upstream commit 9bdc5f75, upstream issue #2668
+#Patch12: varnish-6.0.1_fix_bug2668.patch
 
-# Another formatting error fixed upstream
-Patch14: varnish-6.1.1_fix_upstrbug_2879.patch
+# Patch  013: Just a simple format error
+#Patch13: varnish-6.1.0_fix_testu00008.patch
 
-# pcre-jit fixed upstream, issue #2912
-Patch15: varnish-6.1.1_fix_issue_2912.patch
+# Patch  014: Another formatting error fixed upstream, issue 2879
+#Patch14: varnish-6.1.1_fix_upstrbug_2879.patch
+
+# Patch  015: pcre-jit fixed upstream, issue #2912
+#Patch15: varnish-6.1.1_fix_issue_2912.patch
+
+# Patch  016: Fix some warnings that prohibited clean -Werror compilation
+#             on el6. Will not be fixed upstream
+Patch16: varnish-6.2.0_el6_fix_warning_from_old_gcc.patch
+
+# Patch  017: Fix stack size on ppc64 in test c_00057, upstream commit 88948d9
+Patch17: varnish-6.2.0_fix_ppc64_for_test_c00057.patch
 
 %if 0%{?fedora} > 29
 Provides: varnish%{_isa} = %{version}-%{release}
@@ -58,10 +76,14 @@ Provides: vmod(vtc)%{_isa} = %{version}-%{release}
 
 Obsoletes: varnish-libs
 
-%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+%if 0%{?rhel} == 6
 BuildRequires: python-sphinx python34-docutils
 %else
-BuildRequires: python3-sphinx, python3-docutils
+%if 0%{?rhel} == 7
+BuildRequires: python34 python34-sphinx python34-docutils
+%else
+BuildRequires: python3 python3-sphinx, python3-docutils
+%endif
 %endif
 BuildRequires: jemalloc-devel
 BuildRequires: libedit-devel
@@ -158,12 +180,9 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch1 -p0
 %if 0%{?rhel} == 6
 %patch4 -p0
-%patch9 -p0
+%patch16 -p0
 %endif
-#patch12 -p1
-%patch13 -p0
-%patch14 -p1
-%patch15 -p1
+%patch17 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -181,56 +200,53 @@ export CFLAGS="%{optflags} -fno-exceptions -fPIC -ffloat-store"
 %endif
 %endif
 
+# What gcc version is this?
+gcc --version
+
+# What is the page size
+getconf PAGESIZE
+
 # Man pages are prebuilt. No need to regenerate them.
 export RST2MAN=/bin/true
 # Explicit python, please
-export PYTHON=/usr/bin/python3
+export PYTHON=%{__python}
 
 %configure --disable-static \
 %ifarch aarch64
   --with-jemalloc=no \
 %endif
+%if 0%{?rhel} != 6
+  --with-sphinx-build=sphinx-build-3.4 \
+%endif
   --localstatedir=/var/lib  \
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}} \
 #  --disable-pcre-jit \
-
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g;
         s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
-# I'll never understand libtool
-mkdir lib/libvarnishapi/.libs
-pushd lib/libvarnishapi/.libs
-ln -s libvarnishapi.so libvarnishapi.so.1
-popd
-
-%if 0%{?rhel} == 6 
-# Upstream github issue #22650
-sed -i 's/-Werror$//g;' bin/varnishd/Makefile
-sed -i 's/-Werror$//g;' lib/libvarnishapi/Makefile
-# Workaround old readline/curses, ref upstream github issue #2550
-sed -i 's/vcl1/ vcl1/;' bin/varnishtest/tests/u00011.vtc
-%endif
-
 make %{?_smp_mflags} V=1 
 
 # One varnish user is enough
 sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishncsa.service
 
-# Explicit python, please
-sed -i 's,env python,python3,;' lib/libvcc/vmodtool.py
-sed -i 's,env python,python3,;' lib/libvcc/vsctool.py
-
 # Clean up the html documentation
 rm -rf doc/html/_sources
 
 %check
+
+# rhbz #1690796
+%if 0%{?rhel} == 6
 %ifarch ppc64 ppc64le aarch64
-sed -i 's/48/128/g;' bin/varnishtest/tests/c00057.vtc
+rm bin/varnishtest/tests/c00057.vtc
 %endif
+%endif
+
+export LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}"
 make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
+
 
 %install
 rm -rf %{buildroot}
@@ -240,7 +256,7 @@ rm -rf %{buildroot}
 export LANG=en_US.UTF-8
 %endif
 
-make install DESTDIR=%{buildroot} INSTALL="install -p"
+%{make_install}
 
 # None of these for fedora
 find %{buildroot}/%{_libdir}/ -name '*.la' -exec rm -f {} ';'
@@ -404,6 +420,18 @@ fi
 
 
 %changelog
+* Fri Mar 15 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.0-1
+- New upstream release varnish-6.2
+- Removed patches merged upstream
+- Remove misc sed hacks for bugs that are fixed upstream
+- Added a patch for gcc-4.4 -Werror support on el6
+- Added a patch from upstream to fix too small thread pool stack in a test
+- Override macro __python to make brp-python-bytecompile choose python3
+- Explicitly use python-3.4
+- Switch to make_install macro
+- Better documentation of patches
+- Updated checkout of pkg-varnish-cache
+
 * Thu Mar 07 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-5
 - Adding a patch based on upstream commits, fixing pcre-jit, see 
   upstream bug 2912
