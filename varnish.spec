@@ -24,7 +24,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.2.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -33,7 +33,8 @@ Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.ta
 # Patches:
 # Patch  001: Because of Fedora's libtool no-rpath requirement, it is still
 #             necessary to add LD_LIBRARY_PATH when building the documentation
-Patch1:  varnish-6.1.1_fix_ld_library_path_in_doc_build.patch
+#             (Fixed by using LT_SYS_LIBRARY_PATH)
+#Patch1:  varnish-6.1.1_fix_ld_library_path_in_doc_build.patch
 
 # Patch  004: varnish selinux support for el6
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
@@ -76,14 +77,10 @@ Provides: vmod(vtc)%{_isa} = %{version}-%{release}
 
 Obsoletes: varnish-libs
 
-%if 0%{?rhel} == 6
-BuildRequires: python-sphinx python34-docutils
-%else
-%if 0%{?rhel} == 7
-BuildRequires: python34 python34-sphinx python34-docutils
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+BuildRequires: python34 python-sphinx python34-docutils
 %else
 BuildRequires: python3 python3-sphinx, python3-docutils
-%endif
 %endif
 BuildRequires: jemalloc-devel
 BuildRequires: libedit-devel
@@ -177,7 +174,6 @@ cp pkg-varnish-cache-%{commit1}/sysv/redhat/* redhat/
 sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %endif
 
-%patch1 -p0
 %if 0%{?rhel} == 6
 %patch4 -p0
 %patch16 -p0
@@ -211,9 +207,12 @@ export RST2MAN=/bin/true
 # Explicit python, please
 export PYTHON=%{__python}
 
-%configure --disable-static \
+%configure LT_SYS_LIBRARY_PATH=%_libdir \
+ --disable-static \
 %ifarch aarch64
+%if 0%{?rhel} > 0
   --with-jemalloc=no \
+%endif
 %endif
 %if 0%{?rhel} != 6
   --with-sphinx-build=sphinx-build-3.4 \
@@ -221,11 +220,6 @@ export PYTHON=%{__python}
   --localstatedir=/var/lib  \
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}} \
 #  --disable-pcre-jit \
-
-# We have to remove rpath - not allowed in Fedora
-# (This problem only visible on 64 bit arches)
-sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g;
-        s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 
 make %{?_smp_mflags} V=1 
 
@@ -244,8 +238,7 @@ rm bin/varnishtest/tests/c00057.vtc
 %endif
 %endif
 
-export LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}"
-make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
+make %{?_smp_mflags} check VERBOSE=1
 
 
 %install
@@ -420,6 +413,13 @@ fi
 
 
 %changelog
+* Thu Apr 04 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.0-2
+- Run configure with LT_SYS_LIBRARY_PATH, removing the need for
+  killing RPATH in libtool with sed and scattering LD_LIBRARY_PATH around
+  with patches
+- Some explicit python version fixes needed for el7 python34 vs python36
+- aarch64 now builds with jemalloc again on fedora
+
 * Fri Mar 15 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.0-1
 - New upstream release varnish-6.2
 - Removed patches merged upstream
