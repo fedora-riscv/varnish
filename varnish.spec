@@ -1,55 +1,75 @@
 %global _hardened_build 1
-%global debug_package %{nil}
+
 # https://github.com/varnishcache/varnish-cache/issues/2269
+%global debug_package %{nil}
+
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
 %global _use_internal_dependency_generator 0
 %global __find_provides %{_builddir}/%{name}-%{version}/find-provides %__find_provides
+%endif
+
+%global __provides_exclude_from ^%{_libdir}/varnish/vmods
+
+%global abi 4684c38ecfc194b4f3b5b81594832dbb197a3bb9
+%global vrt 8.0
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
 %global commit1 0ad2f22629c4a368959c423a19e352c9c6c79682
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
-%bcond_without python2
-%bcond_with python3
-
-%if %{with python2} == %{with python3}
-%error Pick exactly one Python version
-%endif
-
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.1.0
-Release: 1%{?dist}
+Version: 6.1.1
+Release: 5%{?dist}
 License: BSD
-Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
-Patch1:  varnish-5.1.1.fix_ld_library_path_in_doc_build.patch
+Patch1:  varnish-6.1.1_fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
 
-# https://github.com/varnishcache/varnish-cache/commit/5220c394232c25bb7a807a35e7394059ecefa821#diff-2279587378a4426edde05f42e1acca5e
-Patch11: varnish-6.0.0.fix_el6_fortify_source.patch
+# based on https://github.com/varnishcache/varnish-cache/commit/9bdc5f75d661a1659c4df60799612a7524a6caa7
+Patch12: varnish-6.0.1_fix_bug2668.patch
+
+# Just a simple formatting error
+Patch13: varnish-6.1.0_fix_testu00008.patch
+
+# Another formatting error fixed upstream
+Patch14: varnish-6.1.1_fix_upstrbug_2879.patch
+
+# pcre-jit fixed upstream, issue #2912
+Patch15: varnish-6.1.1_fix_issue_2912.patch
+
+%if 0%{?fedora} > 29
+Provides: varnish%{_isa} = %{version}-%{release}
+Provides: varnishd(abi)%{_isa} = %{abi}
+Provides: varnishd(vrt)%{_isa} = %{vrt}
+
+Provides: vmod(blob)%{_isa} = %{version}-%{release}
+Provides: vmod(directors)%{_isa} = %{version}-%{release}
+Provides: vmod(proxy)%{_isa} = %{version}-%{release}
+Provides: vmod(purge)%{_isa} = %{version}-%{release}
+Provides: vmod(std)%{_isa} = %{version}-%{release}
+Provides: vmod(unix)%{_isa} = %{version}-%{release}
+Provides: vmod(vtc)%{_isa} = %{version}-%{release}
+%endif
 
 Obsoletes: varnish-libs
 
-%if %{with python3}
-BuildRequires: python3-sphinx, python3-docutils
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+BuildRequires: python-sphinx python34-docutils
 %else
-%if 0%{?rhel} >= 6
-BuildRequires: python-sphinx
+BuildRequires: python3-sphinx, python3-docutils
 %endif
 BuildRequires: jemalloc-devel
-BuildRequires: python-docutils
-%endif
 BuildRequires: libedit-devel
 BuildRequires: ncurses-devel
 BuildRequires: pcre-devel
 BuildRequires: pkgconfig
 BuildRequires: gcc
 BuildRequires: make
-BuildRequires: graphviz
 BuildRequires: nghttp2
 
 %if 0%{?rhel} == 6
@@ -95,24 +115,23 @@ available on: https://www.varnish-cache.org/
 
 %package devel
 Summary: Development files for %{name}
-Group: Development/Libraries
 BuildRequires: ncurses-devel
 Provides: varnish-libs-devel = %{version}-%{release}
 Obsoletes: varnish-libs-devel
+
 %description devel
 Development files for %{name}
 Varnish Cache is a high-performance HTTP accelerator
 Requires: %{name} = %{version}-%{release}
 
-%if %{with python3}
-Requires: python3
+%if 0%{?rhel} == 6
+Requires: python34
 %else
-Requires: python
+Requires: python3
 %endif
 
 %package docs
 Summary: Documentation files for %name
-Group: Documentation
 
 %description docs
 Documentation files for %name
@@ -120,7 +139,6 @@ Documentation files for %name
 %if 0%{?rhel} == 6
 %package selinux
 Summary: Minimal selinux policy for running varnish
-Group:   System Environment/Daemons
 
 %description selinux
 Minimal selinux policy for running varnish4
@@ -141,8 +159,11 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %if 0%{?rhel} == 6
 %patch4 -p0
 %patch9 -p0
-%patch11 -p0
 %endif
+#patch12 -p1
+%patch13 -p0
+%patch14 -p1
+%patch15 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -156,22 +177,23 @@ export LDFLAGS=" -pie"
 export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
 %endif
 %if 0%{?rhel} >= 6
-export CFLAGS="%{optflags} -fPIC -ffloat-store"
+export CFLAGS="%{optflags} -fno-exceptions -fPIC -ffloat-store"
 %endif
 %endif
 
 # Man pages are prebuilt. No need to regenerate them.
 export RST2MAN=/bin/true
+# Explicit python, please
+export PYTHON=/usr/bin/python3
 
 %configure --disable-static \
 %ifarch aarch64
   --with-jemalloc=no \
 %endif
   --localstatedir=/var/lib  \
-  --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
-#ifarch x86_64 #arm
+  --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}} \
 #  --disable-pcre-jit \
-#endif
+
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
@@ -184,10 +206,12 @@ pushd lib/libvarnishapi/.libs
 ln -s libvarnishapi.so libvarnishapi.so.1
 popd
 
-# Upstream github issue #2265
 %if 0%{?rhel} == 6 
+# Upstream github issue #22650
 sed -i 's/-Werror$//g;' bin/varnishd/Makefile
 sed -i 's/-Werror$//g;' lib/libvarnishapi/Makefile
+# Workaround old readline/curses, ref upstream github issue #2550
+sed -i 's/vcl1/ vcl1/;' bin/varnishtest/tests/u00011.vtc
 %endif
 
 make %{?_smp_mflags} V=1 
@@ -196,11 +220,8 @@ make %{?_smp_mflags} V=1
 sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishncsa.service
 
 # Explicit python, please
-%if %{with python2}
-sed -i 's/env python/python2/g;' lib/libvcc/vmodtool.py
-%else
-sed -i 's/env python/python3/g;' lib/libvcc/vmodtool.py
-%endif
+sed -i 's,env python,python3,;' lib/libvcc/vmodtool.py
+sed -i 's,env python,python3,;' lib/libvcc/vsctool.py
 
 # Clean up the html documentation
 rm -rf doc/html/_sources
@@ -213,6 +234,12 @@ make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%
 
 %install
 rm -rf %{buildroot}
+
+# el6 and el7 defaults to LANG=C, which makes python3 fail on utf8
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+export LANG=en_US.UTF-8
+%endif
+
 make install DESTDIR=%{buildroot} INSTALL="install -p"
 
 # None of these for fedora
@@ -377,8 +404,47 @@ fi
 
 
 %changelog
-* Mon Oct 08 2018 Lubos Uhliarik <luhliari@redhat.com> - 6.1.0-1
-- new version 6.1.0 (#1633338)
+* Thu Mar 07 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-5
+- Adding a patch based on upstream commits, fixing pcre-jit, see 
+  upstream bug 2912
+
+* Thu Feb 14 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-4
+- Adding a patch from upstream fixing a simple formatting bug on gcc-9
+
+* Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 6.1.1-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
+* Wed Nov 07 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-2
+- Respun ld_library_path patch for varnish-6.1.1
+
+* Wed Nov 07 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.1-1
+- New upstream release
+
+* Tue Nov 06 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.0-3
+- Dropped the depricated external dependency generator in Fedora
+- Hard coded vmod, abi and vrt provides
+
+* Fri Nov 02 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.0-2
+- Added a patch to fix a failing test in the testsuite
+
+* Fri Nov 02 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.1.0-1
+- New upstream release
+- Respin patches for 6.1.0
+- Disable pcre-jit for now, ref upstream bug #2817
+
+* Tue Oct 09 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-3
+- Explicitly using utf8 under install on el6 and el7 for python quirks
+
+* Tue Oct 09 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-2
+- Explicitly using python3 on all targets
+
+* Thu Sep 27 2018 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.1-1
+- New upstream release
+- Removed graphciz from BuildRequires. It is not used
+- Removed patch for fortify_source on el6. It is merged upstream
+- Small workaround for test suite problem with old readline/curses on el6
+- Supports bcond_with python3, for simpler future deprication of python2
+- Added -fno-exceptions to CFLAGS on el6, see upstream issue #2793
 
 * Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 6.0.0-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
