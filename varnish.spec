@@ -24,7 +24,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.2.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -413,6 +413,9 @@ fi
 
 
 %changelog
+* Sat Jul 27 2019 Fedora Release Engineering <releng@fedoraproject.org> - 6.2.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
 * Thu Apr 04 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.0-2
 - Run configure with LT_SYS_LIBRARY_PATH, removing the need for
   killing RPATH in libtool with sed and scattering LD_LIBRARY_PATH around
