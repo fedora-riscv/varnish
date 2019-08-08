@@ -24,7 +24,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.2.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -89,7 +89,13 @@ BuildRequires: pcre-devel
 BuildRequires: pkgconfig
 BuildRequires: gcc
 BuildRequires: make
+
+# Extra requirements for the build suite
 BuildRequires: nghttp2
+%if 0%{?fedora}
+BuildRequires: haproxy
+BuildRequires: vttest
+%endif
 
 %if 0%{?rhel} == 6
 BuildRequires: selinux-policy
@@ -244,7 +250,7 @@ make %{?_smp_mflags} check VERBOSE=1
 %install
 rm -rf %{buildroot}
 
-# el6 and el7 defaults to LANG=C, which makes python3 fail on utf8
+# mock el6 and el7 defaults to LANG=C, which makes python3 fail when parsing utf8 text
 %if 0%{?rhel} == 6 || 0%{?rhel} == 7
 export LANG=en_US.UTF-8
 %endif
@@ -413,6 +419,10 @@ fi
 
 
 %changelog
+* Thu Aug 08 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.0-3
+- Pull in extra requirements to the build requirements to run more
+  tests (on fedora: haproxy, vttest)
+
 * Thu Apr 04 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.0-2
 - Run configure with LT_SYS_LIBRARY_PATH, removing the need for
   killing RPATH in libtool with sed and scattering LD_LIBRARY_PATH around
