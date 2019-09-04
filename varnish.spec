@@ -23,7 +23,7 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.2.0
+Version: 6.2.1
 Release: 4%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
@@ -419,6 +419,9 @@ fi
 
 
 %changelog
+* Wed Sep 04 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.1-1
+- New upstream release. A security release. Includes fix for CVE-2019-15892
+
 * Thu Aug 08 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.0-4
 - Pull in extra requirements to the build requirements to run more
   tests (on fedora: haproxy, vttest)
