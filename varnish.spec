@@ -419,7 +419,7 @@ fi
 
 
 %changelog
-* Wed Sep 04 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.1-1
+* Wed Sep 04 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.1-4
 - New upstream release. A security release. Includes fix for CVE-2019-15892
 
 * Thu Aug 08 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.2.0-4
