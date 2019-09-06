@@ -20,7 +20,7 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.0.3
+Version: 6.0.4
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -30,7 +30,7 @@ Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.ta
 Patch1:  varnish-6.0.2.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
-Patch13: varnish-6.0.3.fix_upstream_issue_2879.patch
+#Patch13: varnish-6.0.3.fix_upstream_issue_2879.patch
 
 %if 0%{?fedora} > 28
 Provides: varnish%{_isa} = %{version}-%{release}
@@ -153,7 +153,6 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch4 -p0
 %patch9 -p0
 %endif
-%patch13 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -395,6 +394,9 @@ fi
 
 
 %changelog
+* Fri Sep 06 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.4-1
+- New upstream relase. A security release including fix for CVE-2019-15892
+
 * Mon Feb 25 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.3-1
 - New upstream release
 - Added a patch from upstream fixing a compile error on gcc9
