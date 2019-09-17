@@ -184,7 +184,6 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch4 -p0
 %patch16 -p0
 %endif
-#patch17 -p1
 
 %build
 %if 0%{?rhel} == 6
