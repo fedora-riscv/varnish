@@ -6,6 +6,9 @@
 %if 0%{?rhel} == 6 || 0%{?rhel} == 7
 %global _use_internal_dependency_generator 0
 %global __find_provides %{_builddir}/%{name}-%{version}/find-provides %__find_provides
+%global __python /usr/bin/python3.4
+%else
+%global __python %{__python3}
 %endif
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
@@ -173,7 +176,7 @@ export CFLAGS="%{optflags} -fno-exceptions -fPIC -ffloat-store"
 # Man pages are prebuilt. No need to regenerate them.
 export RST2MAN=/bin/true
 # Explicit python, please
-export PYTHON=/usr/bin/python3
+export PYTHON=%{__python}
 
 %configure --disable-static \
 %ifarch aarch64
