@@ -8,7 +8,11 @@
 %global __find_provides %{_builddir}/%{name}-%{version}/find-provides %__find_provides
 %global __python /usr/bin/python3.4
 %else
+%if 0%{?fedora} >= 30
 %global __python %{__python3}
+%else
+%global __python /usr/bin/python3
+%endif
 %endif
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
