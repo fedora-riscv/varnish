@@ -24,7 +24,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.0.4
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -400,6 +400,10 @@ fi
 
 
 %changelog
+* Thu Sep 19 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.4-3
+- Updated vrt and abi versions
+- Use macro __python for python3 when available
+
 * Mon Sep 16 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.4-2
 - Removed tests/v00059.vtc on 32bit after advice from varnish upstream
 
