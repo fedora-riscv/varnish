@@ -24,7 +24,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.3.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -55,8 +55,9 @@ Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 #Patch15: varnish-6.1.1_fix_issue_2912.patch
 
 # Patch  016: Fix some warnings that prohibited clean -Werror compilation
-#             on el6. Will not be fixed upstream
-Patch16: varnish-6.2.0_el6_fix_warning_from_old_gcc.patch
+#             on el6. Will not be fixed upstream. Patch grows more stupid
+#             for each iteration :-(
+Patch16: varnish-6.3.0_el6_fix_warning_from_old_gcc.patch
 
 # Patch  017: Fix stack size on ppc64 in test c_00057, upstream commit 88948d9
 #Patch17: varnish-6.2.0_fix_ppc64_for_test_c00057.patch
@@ -80,7 +81,7 @@ Obsoletes: varnish-libs
 %if 0%{?rhel} == 6 || 0%{?rhel} == 7
 BuildRequires: python34 python-sphinx python34-docutils
 %else
-BuildRequires: python3 python3-sphinx, python3-docutils
+BuildRequires: python3, python3-sphinx, python3-docutils
 %endif
 BuildRequires: jemalloc-devel
 BuildRequires: libedit-devel
@@ -92,8 +93,10 @@ BuildRequires: make
 
 # Extra requirements for the build suite
 BuildRequires: nghttp2
-%if 0%{?fedora}
+%if 0%{?fedora} || 0%{?rhel} >= 8
 BuildRequires: haproxy
+%endif
+%if 0%{?fedora}
 BuildRequires: vttest
 %endif
 
@@ -182,7 +185,7 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 
 %if 0%{?rhel} == 6
 %patch4 -p0
-%patch16 -p0
+%patch16 -p1
 %endif
 
 %build
@@ -418,6 +421,9 @@ fi
 
 
 %changelog
+* Fri Sep 20 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.3.0-2
+- Respin patch for el6
+
 * Mon Sep 16 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.3.0-1
 - New upstream release
 
