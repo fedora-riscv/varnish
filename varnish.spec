@@ -28,7 +28,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.0.4
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -227,8 +227,9 @@ rm -rf doc/html/_sources
 %ifarch ppc64 ppc64le aarch64
 sed -i 's/48/128/g;' bin/varnishtest/tests/c00057.vtc
 %endif
+# https://github.com/varnishcache/varnish-cache/issues/3061
 %ifarch %ix86 armv7hl
-rm bin/varnishtest/tests/v00058.vtc
+sed -i 's/client, -12/client, -11/g;' bin/varnishtest/tests/v00058.vtc
 %endif
 make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
 
@@ -404,6 +405,9 @@ fi
 
 
 %changelog
+* Wed Sep 25 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.4-4
+- Fix for tests/v00058.vtc on 32bit
+
 * Thu Sep 19 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.4-3
 - Updated vrt and abi versions
 - Use macro __python for python3 when available
