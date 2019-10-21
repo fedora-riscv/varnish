@@ -13,7 +13,7 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 0c9a93f1b2c6de49b8c6ec8cefd9d2be50041d79
+%global abi 6e96ff048692235e64565211a38c41432a26c055
 %global vrt 10.0
 
 # Package scripts are now external
@@ -23,8 +23,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.3.0
-Release: 2%{?dist}
+Version: 6.3.1
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -421,6 +421,9 @@ fi
 
 
 %changelog
+* Tue Oct 22 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.3.1-1
+- New upstream release. A security release. Includes fix for VSV00004
+
 * Fri Sep 20 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.3.0-2
 - Respin patch for el6
 
