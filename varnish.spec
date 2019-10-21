@@ -17,7 +17,7 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 14d4eee6f0afc3020a044341235f54f3bd1449f1
+%global abi 3065ccaacc4bb537fb976a524bd808db42c5fe40
 %global vrt 7.1
 
 # Package scripts are now external
@@ -27,8 +27,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.0.4
-Release: 3%{?dist}
+Version: 6.0.5
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -404,6 +404,9 @@ fi
 
 
 %changelog
+* Tue Oct 22 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.5-1
+- New upstream release. A security release. Fixes VSV00004
+
 * Thu Sep 19 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.4-3
 - Updated vrt and abi versions
 - Use macro __python for python3 when available
