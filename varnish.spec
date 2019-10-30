@@ -886,19 +886,19 @@ fi
 - Added a s390 specific patch to libjemalloc.
 
 * Fri Mar 27 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.4-1
-  New upstream release 2.0.4 
+- New upstream release 2.0.4
 
 * Wed Feb 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.3-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
 
 * Wed Feb 11 2009 Ingvar Hagelund <ingvar@linpro.no> - 2.0.3-1
-  New upstream release 2.0.3. A bugfix and feature enhancement release
+- New upstream release 2.0.3. A bugfix and feature enhancement release
 
 * Fri Dec 12 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0.2-2
-  Added a fix for a timeout bug, backported from trunk
+- Added a fix for a timeout bug, backported from trunk
 
 * Mon Nov 10 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0.2-1
-  New upstream release 2.0.2. A bugfix release
+- New upstream release 2.0.2. A bugfix release
 
 * Sun Nov 02 2008 Ingvar Hagelund <ingvar@linpro.no> - 2.0.1-2
 - Removed the requirement for kernel => 2.6.0. All supported
