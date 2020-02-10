@@ -13,18 +13,18 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 6e96ff048692235e64565211a38c41432a26c055
+%global abi 6870fd661a2b42c2e8adad838b5d92a71f27dccd
 %global vrt 10.0
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%global commit1 114fcddfdbd9f1177f34605bb86faa78859ae56a
+%global commit1 ec7ad9e6c6dd7c9b4f4ba60c5b223376908c3ca6
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.3.1
-Release: 3%{?dist}
+Version: 6.3.2
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -76,7 +76,7 @@ Provides: vmod(unix)%{_isa} = %{version}-%{release}
 Provides: vmod(vtc)%{_isa} = %{version}-%{release}
 %endif
 
-Obsoletes: varnish-libs
+Obsoletes: varnish-libs < %{version}-%{release}
 
 %if 0%{?rhel} == 6 || 0%{?rhel} == 7
 BuildRequires: python34 python-sphinx python34-docutils
@@ -93,9 +93,11 @@ BuildRequires: make
 
 # Extra requirements for the build suite
 BuildRequires: nghttp2
-%if 0%{?fedora} || 0%{?rhel} >= 8
-BuildRequires: haproxy
-%endif
+
+# haproxy is broken in rawhide now
+#if 0%{?fedora} || 0%{?rhel} >= 8
+#BuildRequires: haproxy
+#endif
 
 %if 0%{?rhel} == 6
 BuildRequires: selinux-policy
@@ -140,9 +142,10 @@ available on: https://www.varnish-cache.org/
 
 %package devel
 Summary: Development files for %{name}
-BuildRequires: ncurses-devel
+#BuildRequires: ncurses-devel
+Provides: varnish-libs-devel%{?isa} = %{version}-%{release}
 Provides: varnish-libs-devel = %{version}-%{release}
-Obsoletes: varnish-libs-devel
+Obsoletes: varnish-libs-devel < %{version}-%{release}
 
 %description devel
 Development files for %{name}
@@ -354,7 +357,7 @@ exit 0
 
 %post
 %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
-%systemd_post varnish.service
+%systemd_post varnish varnishncsa
 
 # Other distros: Use chkconfig
 %else
@@ -383,7 +386,7 @@ fi
 
 %postun
 %if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
-%systemd_postun_with_restart varnish.service
+%systemd_postun_with_restart varnish varnishncsa
 %endif
 /sbin/ldconfig
 
@@ -397,8 +400,8 @@ fi
 
 %preun
 
-%if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
-%systemd_preun varnish.service
+%if 0%{?fedora} >= 18 || 0%{?rhel}  >= 7
+%systemd_preun varnish varnishncsa
 %else
 
 if [ $1 -lt 1 ]; then
@@ -418,6 +421,11 @@ fi
 
 
 %changelog
+* Tue Feb 11 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.3.2-1
+- New upstream release, a security release. Includes fix for VSV00005
+- Added new checkout of pkg-varnish
+- Temporarily disable haproxy unit tests, as haproxy seems broken in rawhide
+
 * Mon Feb 10 2020 Joe Orton <jorton@redhat.com> - 6.3.1-3
 - drop buildreq on (retired) vttest (#1800232)
 
