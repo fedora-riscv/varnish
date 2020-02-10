@@ -1,0 +1,11 @@
+--- bin/varnishtest/vtc_varnish.c.orig	2020-02-10 23:29:22.765650634 +0100
++++ bin/varnishtest/vtc_varnish.c	2020-02-10 23:30:04.179140158 +0100
+@@ -117,7 +117,7 @@
+ 			    cmd, errno, strerror(errno));
+ 	}
+ 	i = VCLI_ReadResult(v->cli_fd, &retval, &r, vtc_maxdur);
+-	if (i != 0 && !vtc_stop)
++	if (i != 0 && !vtc_stop && cmd != NULL)
+ 		vtc_fatal(v->vl, "CLI failed (%s) = %d %u %s",
+ 		    cmd, i, retval, r);
+ 	vtc_log(v->vl, 3, "CLI RX  %u", retval);
