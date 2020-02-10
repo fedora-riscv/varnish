@@ -24,7 +24,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.3.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -95,9 +95,6 @@ BuildRequires: make
 BuildRequires: nghttp2
 %if 0%{?fedora} || 0%{?rhel} >= 8
 BuildRequires: haproxy
-%endif
-%if 0%{?fedora}
-BuildRequires: vttest
 %endif
 
 %if 0%{?rhel} == 6
@@ -421,6 +418,9 @@ fi
 
 
 %changelog
+* Mon Feb 10 2020 Joe Orton <jorton@redhat.com> - 6.3.1-3
+- drop buildreq on (retired) vttest (#1800232)
+
 * Fri Jan 31 2020 Fedora Release Engineering <releng@fedoraproject.org> - 6.3.1-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
 
