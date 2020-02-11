@@ -24,7 +24,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.3.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -62,7 +62,7 @@ Patch16: varnish-6.3.0_el6_fix_warning_from_old_gcc.patch
 # Patch  017: Fix stack size on ppc64 in test c_00057, upstream commit 88948d9
 #Patch17: varnish-6.2.0_fix_ppc64_for_test_c00057.patch
 
-# Patch 018: gcc-10.0.1/s390x compilation fix
+# Patch 018: gcc-10.0.1/s390x compilation fix, upstream commit b0af060
 Patch18: varnish-6.3.2_fix_s390x.patch
 
 %if 0%{?fedora} > 29
@@ -191,7 +191,7 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch16 -p1
 %endif
 
-%patch18 -p0
+%patch18 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -426,6 +426,9 @@ fi
 
 
 %changelog
+* Wed Feb 12 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.3.2-3
+- Got corrected compilation fix patch from upstream
+
 * Tue Feb 11 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.3.2-2
 - Added simple compilation fix for gcc-10.0.1/s390x
 
