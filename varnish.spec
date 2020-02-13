@@ -224,8 +224,8 @@ make %{?_smp_mflags} V=1
 sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishncsa.service
 
 # Explicit python, please
-sed -i 's,env python,python3,;' lib/libvcc/vmodtool.py
-sed -i 's,env python,python3,;' lib/libvcc/vsctool.py
+sed -i 's,env python3,python3,;' lib/libvcc/vmodtool.py
+sed -i 's,env python3,python3,;' lib/libvcc/vsctool.py
 
 # Clean up the html documentation
 rm -rf doc/html/_sources
@@ -416,6 +416,7 @@ fi
 - New upstream release. A security release. Fixes VSV00005
 - Versioned obsoletes
 - Build with utf8 LANG on el6 and el7
+- Changed the sed filter for explicit python as upstream has changed
 
 * Tue Oct 22 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.5-1
 - New upstream release. A security release. Fixes VSV00004
