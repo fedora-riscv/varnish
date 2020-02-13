@@ -17,7 +17,7 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 3065ccaacc4bb537fb976a524bd808db42c5fe40
+%global abi 29a1a8243dbef3d973aec28dc90403188c1dc8e7
 %global vrt 7.1
 
 # Package scripts are now external
@@ -27,7 +27,7 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.0.5
+Version: 6.0.6
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -37,7 +37,8 @@ Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.ta
 Patch1:  varnish-6.0.2.fix_ld_library_path_in_doc_build.patch
 Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
-#Patch13: varnish-6.0.3.fix_upstream_issue_2879.patch
+# Patch 018: gcc-10.0.1/s390x compilation fix, upstream commit b0af060
+Patch18: varnish-6.3.2_fix_s390x.patch
 
 %if 0%{?fedora} > 28
 Provides: varnish%{_isa} = %{version}-%{release}
@@ -53,7 +54,7 @@ Provides: vmod(unix)%{_isa} = %{version}-%{release}
 Provides: vmod(vtc)%{_isa} = %{version}-%{release}
 %endif
 
-Obsoletes: varnish-libs
+Obsoletes: varnish-libs < %{version}-%{release}
 
 %if 0%{?rhel} == 6 || 0%{?rhel} == 7
 BuildRequires: python-sphinx python34-docutils
@@ -115,7 +116,7 @@ Summary: Development files for %{name}
 Group: Development/Libraries
 BuildRequires: ncurses-devel
 Provides: varnish-libs-devel = %{version}-%{release}
-Obsoletes: varnish-libs-devel
+Obsoletes: varnish-libs-devel < %{version}-%{release}
 
 %description devel
 Development files for %{name}
@@ -160,6 +161,7 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch4 -p0
 %patch9 -p0
 %endif
+%patch18 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -211,7 +213,12 @@ sed -i 's/-Werror$//g;' lib/libvarnishapi/Makefile
 sed -i 's/vcl1/ vcl1/;' bin/varnishtest/tests/u00011.vtc
 %endif
 
-make %{?_smp_mflags} V=1 
+# el6 and el7 defaults to LANG=C, which makes python3 fail on utf8
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+export LANG=en_US.UTF-8
+%endif
+
+make %{?_smp_mflags} V=1
 
 # One varnish user is enough
 sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishncsa.service
@@ -405,6 +412,11 @@ fi
 
 
 %changelog
+* Thu Feb 13 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.6-1
+- New upstream release. A security release. Fixes VSV00005
+- Versioned obsoletes
+- Build with utf8 LANG on el6 and el7
+
 * Tue Oct 22 2019 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.5-1
 - New upstream release. A security release. Fixes VSV00004
 
