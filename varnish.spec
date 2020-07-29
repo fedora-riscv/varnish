@@ -24,7 +24,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.4.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -429,6 +429,9 @@ fi
 
 
 %changelog
+* Wed Jul 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 6.4.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
 * Mon Mar 16 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.4.0-1
 - New upstream release
 - Respin patches for 6.4.0
