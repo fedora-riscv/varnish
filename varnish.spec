@@ -434,7 +434,7 @@ fi
 
 %changelog
 * Tue Aug 04 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.4.0-4
-- Added -Wno-error=free-nonheap-object to CFLAS to build on s390x
+- Added -Wno-error=free-nonheap-object to CFLAGS to build on s390x
 
 * Sat Aug 01 2020 Fedora Release Engineering <releng@fedoraproject.org> - 6.4.0-3
 - Second attempt - Rebuilt for
