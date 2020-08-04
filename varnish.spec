@@ -24,7 +24,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.4.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -205,6 +205,10 @@ export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
 %if 0%{?rhel} >= 6
 export CFLAGS="%{optflags} -fno-exceptions -fPIC -ffloat-store"
 %endif
+%endif
+
+%ifarch s390x
+export CFLAGS="%{optflags} -Wno-error=free-nonheap-object"
 %endif
 
 # What gcc version is this?
@@ -429,6 +433,9 @@ fi
 
 
 %changelog
+* Tue Aug 04 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.4.0-4
+- Added -Wno-error=free-nonheap-object to CFLAS to build on s390x
+
 * Sat Aug 01 2020 Fedora Release Engineering <releng@fedoraproject.org> - 6.4.0-3
 - Second attempt - Rebuilt for
   https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
