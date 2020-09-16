@@ -1,5 +1,4 @@
-%global _hardened_build 1
-
+%global _hardened_build 0
 # https://github.com/varnishcache/varnish-cache/issues/2269
 %global debug_package %{nil}
 
@@ -23,11 +22,11 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.4.0
-Release: 4%{?dist}
+Version: 6.5.0
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
-Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
+Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 
 # Patches:
@@ -57,7 +56,7 @@ Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 # Patch  016: Fix some warnings that prohibited clean -Werror compilation
 #             on el6. Will not be fixed upstream. Patch grows more stupid
 #             for each iteration :-(
-Patch16: varnish-6.4.0_el6_fix_warning_from_old_gcc.patch
+Patch16: varnish-6.5.0_el6_fix_warning_from_old_gcc.patch
 
 # Patch  017: Fix stack size on ppc64 in test c_00057, upstream commit 88948d9
 #Patch17: varnish-6.2.0_fix_ppc64_for_test_c00057.patch
@@ -176,7 +175,7 @@ Minimal selinux policy for running varnish4
 %endif
 
 %prep
-%setup -q -n varnish-%{version}%{?vd_rc}
+%setup -q
 tar xzf %SOURCE1
 ln -s pkg-varnish-cache-%{commit1}/redhat redhat
 ln -s pkg-varnish-cache-%{commit1}/debian debian
@@ -433,6 +432,10 @@ fi
 
 
 %changelog
+* Wed Sep 16 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.5.0-1
+- New upstream release varnish-6.5.0
+- Respun silly patch to get rid of compiler warnings on el6
+
 * Tue Aug 04 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.4.0-4
 - Added -Wno-error=free-nonheap-object to CFLAGS to build on s390x
 
