@@ -12,8 +12,8 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 13f137934ec1cf14af66baf7896311115ee35598
-%global vrt 11.0
+%global abi 1dae23376bb5ea7a6b8e9e4b9ed95cdc9469fb64
+%global vrt 12.0
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
@@ -22,7 +22,7 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.5.0
+Version: 6.5.1
 Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
@@ -432,6 +432,9 @@ fi
 
 
 %changelog
+* Fri Sep 25 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.5.1-1
+- New upstream release varnish-6.5.1
+
 * Wed Sep 16 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.5.0-1
 - New upstream release varnish-6.5.0
 - Respun silly patch to get rid of compiler warnings on el6
