@@ -17,7 +17,7 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 29a1a8243dbef3d973aec28dc90403188c1dc8e7
+%global abi 525d371e3ea0e0c38edd7baf0f80dc226560f26e
 %global vrt 7.1
 
 # Package scripts are now external
@@ -27,7 +27,7 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.0.6
+Version: 6.0.7
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -412,6 +412,9 @@ fi
 
 
 %changelog
+* Thu Nov 12 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.7-1
+- New upstream release. A bugfix release
+
 * Thu Feb 13 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.6-1
 - New upstream release. A security release. Fixes VSV00005
 - Versioned obsoletes
