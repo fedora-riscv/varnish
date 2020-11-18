@@ -1,0 +1,20 @@
+--- varnish-6.0.7/bin/varnishtest/tests/v00064.vtc	2020-11-06 11:26:43.000000000 +0100
++++ varnish-6.5.1/bin/varnishtest/tests/v00064.vtc	2020-09-25 11:14:30.000000000 +0200
+@@ -44,7 +44,7 @@
+ delay .1
+ 
+ varnish v1 -expect SM?.Transient.g_bytes > 1048000
+-varnish v1 -expect SM?.Transient.g_space == 8
++varnish v1 -expect SM?.Transient.g_space < 50
+ 
+ client c1 {
+     # Fill malloc
+@@ -56,7 +56,7 @@
+ } -run
+ 
+ varnish v1 -expect SM?.s0.g_bytes > 1048000
+-varnish v1 -expect SM?.s0.g_space == 4
++varnish v1 -expect SM?.s0.g_space < 50
+ 
+ client c1 {
+     # Check that Varnish is still alive

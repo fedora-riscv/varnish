@@ -28,7 +28,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.0.7
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -39,6 +39,7 @@ Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch9:  varnish-5.1.1.fix_python_version.patch
 # Patch 018: gcc-10.0.1/s390x compilation fix, upstream commit b0af060
 Patch18: varnish-6.3.2_fix_s390x.patch
+Patch21: varnish-6.0.7.fix_tests_v00064.patch
 
 %if 0%{?fedora} > 28
 Provides: varnish%{_isa} = %{version}-%{release}
@@ -162,6 +163,7 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch9 -p0
 %endif
 %patch18 -p1
+%patch21 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -234,9 +236,11 @@ rm -rf doc/html/_sources
 %ifarch ppc64 ppc64le aarch64
 sed -i 's/48/128/g;' bin/varnishtest/tests/c00057.vtc
 %endif
-# https://github.com/varnishcache/varnish-cache/issues/3061
-%ifarch %ix86 armv7hl
+# Upstream issues 3061, 3308
+%ifarch %ix86 x86_64 armv7hl
+sed -i 's/-vcl {$/\\/g; 4 a -arg "-p thread_pool_stack=64k" -vcl {' bin/varnishtest/tests/m00035.vtc
 sed -i 's/client, -12/client, -11/g;' bin/varnishtest/tests/v00058.vtc
+rm bin/varnishtest/tests/r03308.*
 %endif
 make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
 
@@ -412,6 +416,10 @@ fi
 
 
 %changelog
+* Tue Nov 17 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.7-2
+- Added a small tuning patch fixing test suite on armv7hl
+- Removing a non-working test on armv7hl
+
 * Thu Nov 12 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.7-1
 - New upstream release. A bugfix release
 
