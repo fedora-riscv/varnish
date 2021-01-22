@@ -2,7 +2,7 @@
 # https://github.com/varnishcache/varnish-cache/issues/2269
 %global debug_package %{nil}
 
-%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+%if 0%{?rhel} == 7
 %global _use_internal_dependency_generator 0
 %global __find_provides %{_builddir}/%{name}-%{version}/find-provides %__find_provides
 %global __python /usr/bin/python3.4
@@ -23,7 +23,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.5.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -36,7 +36,7 @@ Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.ta
 #Patch1:  varnish-6.1.1_fix_ld_library_path_in_doc_build.patch
 
 # Patch  004: varnish selinux support for el6
-Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
+#Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 
 # Patch  009: Hard code older python support in configure for older el releases
 #Patch9:  varnish-5.1.1.fix_python_version.patch
@@ -56,7 +56,7 @@ Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 # Patch  016: Fix some warnings that prohibited clean -Werror compilation
 #             on el6. Will not be fixed upstream. Patch grows more stupid
 #             for each iteration :-(
-Patch16: varnish-6.5.0_el6_fix_warning_from_old_gcc.patch
+#Patch16: varnish-6.5.0_el6_fix_warning_from_old_gcc.patch
 
 # Patch  017: Fix stack size on ppc64 in test c_00057, upstream commit 88948d9
 #Patch17: varnish-6.2.0_fix_ppc64_for_test_c00057.patch
@@ -80,8 +80,8 @@ Provides: vmod(vtc)%{_isa} = %{version}-%{release}
 
 Obsoletes: varnish-libs < %{version}-%{release}
 
-%if 0%{?rhel} == 6 || 0%{?rhel} == 7
-BuildRequires: python34 python-sphinx python34-docutils
+%if 0%{?rhel} == 7
+BuildRequires: python34 python34-sphinx python34-docutils
 %else
 BuildRequires: python3, python3-sphinx, python3-docutils
 %endif
@@ -101,9 +101,6 @@ BuildRequires: nghttp2
 #BuildRequires: haproxy
 #endif
 
-%if 0%{?rhel} == 6
-BuildRequires: selinux-policy
-%endif
 Requires: logrotate
 Requires: ncurses
 Requires: pcre
@@ -114,22 +111,11 @@ Requires(post): /usr/bin/uuidgen
 # Varnish actually needs gcc installed to work. It uses the C compiler 
 # at runtime to compile the VCL configuration files. This is by design.
 Requires: gcc
-%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 Requires(post): systemd-units
 Requires(post): systemd-sysv
 Requires(preun): systemd-units
 Requires(postun): systemd-units
 BuildRequires: systemd-units
-%endif
-%if 0%{?rhel} == 6
-Requires: %{name}-selinux
-Requires(post): policycoreutils, 
-Requires(preun): policycoreutils
-Requires(postun): policycoreutils
-Requires(post): /sbin/chkconfig
-Requires(preun): /sbin/chkconfig
-Requires(preun): /sbin/service
-%endif
 
 %description
 This is Varnish Cache, a high-performance HTTP accelerator.
@@ -154,11 +140,7 @@ Development files for %{name}
 Varnish Cache is a high-performance HTTP accelerator
 Requires: %{name} = %{version}-%{release}
 
-%if 0%{?rhel} == 6
-Requires: python34
-%else
 Requires: python3
-%endif
 
 %package docs
 Summary: Documentation files for %name
@@ -166,43 +148,19 @@ Summary: Documentation files for %name
 %description docs
 Documentation files for %name
 
-%if 0%{?rhel} == 6
-%package selinux
-Summary: Minimal selinux policy for running varnish
-
-%description selinux
-Minimal selinux policy for running varnish4
-%endif
-
 %prep
 %setup -q
 tar xzf %SOURCE1
 ln -s pkg-varnish-cache-%{commit1}/redhat redhat
 ln -s pkg-varnish-cache-%{commit1}/debian debian
 cp redhat/find-provides .
-%if 0%{?rhel} == 6
-cp pkg-varnish-cache-%{commit1}/sysv/redhat/* redhat/
-sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
-%endif
-
-%if 0%{?rhel} == 6
-%patch4 -p0
-%patch16 -p1
-%endif
+sed -i 's,rst2man-3.6,rst2man-3.4,g; s,rst2html-3.6,rst2html-3.4,g; s,phinx-build-3.6,phinx-build-3.4,g' configure
 
 %build
-%if 0%{?rhel} == 6
-export CFLAGS="%{optflags} -fPIC"
-export LDFLAGS=" -pie"
-%endif
-
 # https://gcc.gnu.org/wiki/FAQ#PR323
 %ifarch %ix86
 %if 0%{?fedora} > 21
 export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
-%endif
-%if 0%{?rhel} >= 6
-export CFLAGS="%{optflags} -fno-exceptions -fPIC -ffloat-store"
 %endif
 %endif
 
@@ -223,14 +181,6 @@ export PYTHON=%{__python}
 
 %configure LT_SYS_LIBRARY_PATH=%_libdir \
  --disable-static \
-%ifarch aarch64
-%if 0%{?rhel} > 0
-  --with-jemalloc=no \
-%endif
-%endif
-%if 0%{?rhel} != 6
-  --with-sphinx-build=sphinx-build-3.4 \
-%endif
   --localstatedir=/var/lib  \
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}} \
 #  --disable-pcre-jit \
@@ -245,15 +195,8 @@ rm -rf doc/html/_sources
 
 %check
 
-# rhbz #1690796
-%if 0%{?rhel} == 6
-%ifarch ppc64 ppc64le aarch64
-rm bin/varnishtest/tests/c00057.vtc
-%endif
-%endif
-
 # Remove this for now. Hard to get the size and timing right
-%ifarch s390 s390x
+%ifarch s390 s390x aarch64
 rm bin/varnishtest/tests/o00005.vtc
 %endif
 
@@ -263,8 +206,8 @@ make %{?_smp_mflags} check VERBOSE=1
 %install
 rm -rf %{buildroot}
 
-# mock el6 and el7 defaults to LANG=C, which makes python3 fail when parsing utf8 text
-%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+# mock el7 defaults to LANG=C, which makes python3 fail when parsing utf8 text
+%if 0%{?rhel} == 7
 export LANG=en_US.UTF-8
 %endif
 
@@ -282,18 +225,9 @@ install -D -m 0644 redhat/varnish.logrotate %{buildroot}%{_sysconfdir}/logrotate
 install -D -m 0644 include/vcs_version.h %{buildroot}%{_includedir}/varnish
 install -D -m 0644 include/vrt.h %{buildroot}%{_includedir}/varnish
 
-# systemd support
-%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 mkdir -p %{buildroot}%{_unitdir}
 install -D -m 0644 redhat/varnish.service %{buildroot}%{_unitdir}/varnish.service
 install -D -m 0644 redhat/varnishncsa.service %{buildroot}%{_unitdir}/varnishncsa.service
-
-# default is standard sysvinit
-%else
-install -D -m 0644 redhat/varnish.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/varnish
-install -D -m 0755 redhat/varnish.initrc %{buildroot}%{_initrddir}/varnish
-install -D -m 0755 redhat/varnishncsa.initrc %{buildroot}%{_initrddir}/varnishncsa
-%endif
 install -D -m 0755 redhat/varnishreload %{buildroot}%{_sbindir}/varnishreload
 
 echo %{_libdir}/varnish > %{buildroot}%{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
@@ -302,12 +236,6 @@ echo %{_libdir}/varnish > %{buildroot}%{_sysconfdir}/ld.so.conf.d/varnish-%{_arc
 chmod 644 lib/libvmod_*/*.c
 chmod 644 lib/libvmod_*/*.h
 
-# selinux module for el6
-%if 0%{?rhel} == 6
-cd selinux
-make -f %{_datadir}/selinux/devel/Makefile
-install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name}/varnish4.pp
-%endif
 
 %files
 %{_sbindir}/*
@@ -328,17 +256,8 @@ install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name
 %config %{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
 
 
-# systemd from fedora 17 and rhel 7
-%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 %{_unitdir}/varnish.service
 %{_unitdir}/varnishncsa.service
-
-# default is standard sysvinit
-%else
-%config(noreplace) %{_sysconfdir}/sysconfig/varnish
-%{_initrddir}/varnish
-%{_initrddir}/varnishncsa
-%endif
 
 %files devel
 %license LICENSE
@@ -354,10 +273,6 @@ install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name
 %doc doc/html
 %doc doc/changes*.html
 
-%if 0%{?rhel} == 6
-%files selinux
-%{_datadir}/selinux/packages/%{name}/varnish4.pp
-%endif
 
 %pre
 getent group varnish >/dev/null || groupadd -r varnish
@@ -366,72 +281,27 @@ getent passwd varnish >/dev/null || \
                -c "Varnish Cache" varnish
 exit 0
 
+
 %post
-%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 %systemd_post varnish varnishncsa
-
-# Other distros: Use chkconfig
-%else
-/sbin/chkconfig --add varnish
-/sbin/chkconfig --add varnishncsa 
-%endif
-
 /sbin/ldconfig
-
-# Previous versions had varnishlog and varnishncsa running as root
-chown varnish:varnish /var/log/varnish/varnishncsa.log 2>/dev/null || true
-
 test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc/varnish/secret)
 
-# selinux module for el6
-%if 0%{?rhel} == 6
-%post selinux
-if [ "$1" -le "1" ] ; then # First install
-semodule -i %{_datadir}/selinux/packages/%{name}/varnish4.pp 2>/dev/null || :
-fi
-
-%preun selinux
-if [ "$1" -lt "1" ] ; then # Final removal
-semodule -r varnish4 2>/dev/null || :
-fi
-
 %postun
-%if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
 %systemd_postun_with_restart varnish varnishncsa
-%endif
 /sbin/ldconfig
 
 
-%postun selinux
-if [ "$1" -ge "1" ] ; then # Upgrade
-semodule -i %{_datadir}/selinux/packages/%{name}/varnish4.pp 2>/dev/null || :
-fi
-
-%endif
-
 %preun
-
-%if 0%{?fedora} >= 18 || 0%{?rhel}  >= 7
 %systemd_preun varnish varnishncsa
-%else
-
-if [ $1 -lt 1 ]; then
-  # Package removal, not upgrade
-  %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
-  /bin/systemctl --no-reload disable varnish.service > /dev/null 2>&1 || :
-  /bin/systemctl stop varnish.service > /dev/null 2>&1 || :
-  /bin/systemctl stop varnishncsa.service > /dev/null 2>&1 || :
-  %else
-  /sbin/service varnish stop > /dev/null 2>&1
-  /sbin/service varnishncsa stop > /dev/null 2>%1
-  /sbin/chkconfig --del varnish
-  /sbin/chkconfig --del varnishncsa 
-  %endif
-fi
-%endif
 
 
 %changelog
+* Thu Jan 21 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.5.1-2
+- Pulled support for el6
+- Pulled support for sysvinit
+- aarch64 builds now with jemalloc again on el7
+
 * Fri Sep 25 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.5.1-1
 - New upstream release varnish-6.5.1
 
