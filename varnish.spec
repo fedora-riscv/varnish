@@ -298,7 +298,7 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
-* Tue May 18 2021 Timm Bäder <tbaeder@redhat.com> - 6.6.0-1
+* Tue May 18 2021 Timm Bäder <tbaeder@redhat.com> - 6.6.0-2
 - Use make macros
 
 * Mon Mar 15 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.6.0-1
