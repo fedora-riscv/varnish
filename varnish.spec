@@ -23,7 +23,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.6.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -185,7 +185,7 @@ export PYTHON=%{__python}
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}} \
 #  --disable-pcre-jit \
 
-make %{?_smp_mflags} V=1 
+%make_build
 
 # One varnish user is enough
 sed -i 's,User=varnishlog,User=varnish,g;' redhat/varnishncsa.service
@@ -200,7 +200,7 @@ rm -rf doc/html/_sources
 rm bin/varnishtest/tests/o00005.vtc
 %endif
 
-make %{?_smp_mflags} check VERBOSE=1
+%make_build check
 
 
 %install
@@ -298,6 +298,9 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Tue May 18 2021 Timm Bäder <tbaeder@redhat.com> - 6.6.0-1
+- Use make macros
+
 * Mon Mar 15 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.6.0-1
 - New upstream release
 - Now provides vmod_purge
