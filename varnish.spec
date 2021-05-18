@@ -22,8 +22,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.5.1
-Release: 4%{?dist}
+Version: 6.6.0
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -76,9 +76,9 @@ Provides: vmod(purge)%{_isa} = %{version}-%{release}
 Provides: vmod(std)%{_isa} = %{version}-%{release}
 Provides: vmod(unix)%{_isa} = %{version}-%{release}
 Provides: vmod(vtc)%{_isa} = %{version}-%{release}
+Provides: vmod_purge.so%{_isa} = %{version}-%{release}
 %endif
 
-Obsoletes: varnish-libs < %{version}-%{release}
 
 %if 0%{?rhel} == 7
 BuildRequires: python34 python34-sphinx python34-docutils
@@ -97,9 +97,9 @@ BuildRequires: make
 BuildRequires: nghttp2
 
 # haproxy is broken in rawhide now
-#if 0#{?fedora} || 0#{?rhel} >= 8
-#BuildRequires: haproxy
-#endif
+%if 0%{?rhel} >= 8
+BuildRequires: haproxy
+%endif
 
 Requires: logrotate
 Requires: ncurses
@@ -233,9 +233,10 @@ install -D -m 0755 redhat/varnishreload %{buildroot}%{_sbindir}/varnishreload
 echo %{_libdir}/varnish > %{buildroot}%{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
 
 # No idea why these ends up with mode 600 in the debug package
+%if 0%{debug_package}
 chmod 644 lib/libvmod_*/*.c
 chmod 644 lib/libvmod_*/*.h
-
+%endif
 
 %files
 %{_sbindir}/*
@@ -297,6 +298,12 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Mon Mar 15 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.6.0-1
+- New upstream release
+- Now provides vmod_purge
+- Uses haproxy in the test suite on el8
+- Skipped obsoleting varnish-libs. That was many years ago now.
+
 * Tue Mar 02 2021 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 6.5.1-4
 - Rebuilt for updated systemd-rpm-macros
   See https://pagure.io/fesco/issue/2583.
