@@ -22,8 +22,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.5.1
-Release: 3%{?dist}
+Version: 6.5.2
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -297,6 +297,10 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Fri Jul 16 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.5.2-1
+- New upstream release
+- Includes fix for VSV00007 aka CVE-2021-36740, bz#1982412
+
 * Wed Jan 27 2021 Fedora Release Engineering <releng@fedoraproject.org> - 6.5.1-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
 
