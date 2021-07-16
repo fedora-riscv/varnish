@@ -24,7 +24,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.4.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
@@ -64,6 +64,12 @@ Patch16: varnish-6.4.0_el6_fix_warning_from_old_gcc.patch
 
 # Patch 018: gcc-10.0.1/s390x compilation fix, upstream commit b0af060
 #Patch18: varnish-6.3.2_fix_s390x.patch
+
+# Patch019: fix for CVE-2021-36740, upstream commit 82b0a629
+Patch19: varnish-6.4.0_fix_VSV00007.patch
+
+# Patch019: test for CVE-2021-36740, upstream commit 102d0e7a
+Patch20: varnish-6.4.0_test_for_VSV00007.patch
 
 %if 0%{?fedora} > 29
 Provides: varnish%{_isa} = %{version}-%{release}
@@ -190,6 +196,8 @@ sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
 %patch4 -p0
 %patch16 -p1
 %endif
+%patch19 -p1
+%patch20 -p1
 
 %build
 %if 0%{?rhel} == 6
@@ -433,6 +441,9 @@ fi
 
 
 %changelog
+* Say Jul 17 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.4.0-5
+- Added patches for CVE-2021-36740 aka VSV00007, bz#1982412
+
 * Tue Aug 04 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.4.0-4
 - Added -Wno-error=free-nonheap-object to CFLAGS to build on s390x
 
