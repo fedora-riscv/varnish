@@ -22,8 +22,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.6.0
-Release: 2%{?dist}
+Version: 6.6.1
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -298,6 +298,10 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Sat Jul 17 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.6.1-1
+- New upstream release
+- Includes fix for CVE-2021-36740 aka VSV00007, bz#1982413
+
 * Tue May 18 2021 Timm Bäder <tbaeder@redhat.com> - 6.6.0-2
 - Use make macros
 
