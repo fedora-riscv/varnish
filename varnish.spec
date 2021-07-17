@@ -12,8 +12,8 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 1dae23376bb5ea7a6b8e9e4b9ed95cdc9469fb64
-%global vrt 12.0
+%global abi e6a8c860944c4f6a7e1af9f40674ea78bbdcdc66
+%global vrt 13.0
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
@@ -23,7 +23,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.6.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -298,6 +298,9 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Sat Jul 17 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.6.1-2
+- Bumped abi and vrt versions
+
 * Sat Jul 17 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> 6.6.1-1
 - New upstream release
 - Includes fix for CVE-2021-36740 aka VSV00007, bz#1982413
