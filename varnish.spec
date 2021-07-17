@@ -17,7 +17,7 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 525d371e3ea0e0c38edd7baf0f80dc226560f26e
+%global abi 97e54ada6ac578af332e52b44d2038bb4fa4cd4a
 %global vrt 7.1
 
 # Package scripts are now external
@@ -27,8 +27,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.0.7
-Release: 2%{?dist}
+Version: 6.0.8
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: https://www.varnish-cache.org/
@@ -416,6 +416,10 @@ fi
 
 
 %changelog
+* Sat Jul 17 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.8-1
+- New upstream release
+- Includes fix for CVE-2021-36740 aka VSV00007, bz#1982413
+
 * Tue Nov 17 2020 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.7-2
 - Added a small tuning patch fixing test suite on armv7hl
 - Removing a non-working test on armv7hl
