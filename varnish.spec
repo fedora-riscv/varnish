@@ -204,8 +204,7 @@ rm -rf doc/html/_sources
 rm bin/varnishtest/tests/o00005.vtc
 %endif
 
-#make_build check
-bin/varnishtest/varnishtest -i -v bin/varnishtest/tests/b00046.vtc
+%make_build check
 
 %install
 rm -rf %{buildroot}
