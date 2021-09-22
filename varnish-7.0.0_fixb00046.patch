@@ -1,0 +1,11 @@
+--- bin/varnishtest/tests/b00046.vtc.orig	2021-09-22 21:03:57.909742460 +0200
++++ bin/varnishtest/tests/b00046.vtc	2021-09-22 21:04:03.075783664 +0200
+@@ -18,7 +18,7 @@
+ varnish v1 -vcl+backend {} -start
+ 
+ client c1 {
+-	delay 0.5
++	delay 1
+ 	send_urgent " "
+ 	expect_close
+ } -run
