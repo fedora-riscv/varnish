@@ -12,18 +12,18 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi e6a8c860944c4f6a7e1af9f40674ea78bbdcdc66
-%global vrt 13.0
+%global abi 454733b82a3279a1603516b4f0a07f8bad4bcd55
+%global vrt 14.0
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%global commit1 ec7ad9e6c6dd7c9b4f4ba60c5b223376908c3ca6
+%global commit1 d3e6a3fad7d4c2ac781ada92dcc246e7eef9d129
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.6.1
-Release: 3%{?dist}
+Version: 7.0.0
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -88,7 +88,7 @@ BuildRequires: python3, python3-sphinx, python3-docutils
 BuildRequires: jemalloc-devel
 BuildRequires: libedit-devel
 BuildRequires: ncurses-devel
-BuildRequires: pcre-devel
+BuildRequires: pcre2-devel
 BuildRequires: pkgconfig
 BuildRequires: gcc
 BuildRequires: make
@@ -298,6 +298,10 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Thu Sep 16 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.0.0-1
+- New upstream release
+- Updated pkg-varnish checkout from the 7.0 branch
+
 * Fri Jul 23 2021 Fedora Release Engineering <releng@fedoraproject.org> - 6.6.1-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
 
