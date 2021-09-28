@@ -5,7 +5,7 @@
  
  client c1 {
 -	delay 0.5
-+	delay 1
++	delay 2
  	send_urgent " "
  	expect_close
  } -run
