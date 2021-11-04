@@ -23,7 +23,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 7.0.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -103,7 +103,7 @@ BuildRequires: haproxy
 
 Requires: logrotate
 Requires: ncurses
-Requires: pcre
+Requires: pcre2
 Requires: jemalloc
 Requires: redhat-rpm-config
 Requires(pre): shadow-utils
@@ -300,6 +300,9 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Tue Nov 02 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.0.0-2
+- upstream switched to pcre2 a while ago
+
 * Thu Sep 16 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.0.0-1
 - New upstream release
 - Updated pkg-varnish checkout from the 7.0 branch
