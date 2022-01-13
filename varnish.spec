@@ -12,7 +12,7 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 454733b82a3279a1603516b4f0a07f8bad4bcd55
+%global abi d454d0ed759ce8ed2b5c7bf244090a73487e8021
 %global vrt 14.0
 
 # Package scripts are now external
@@ -300,6 +300,9 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Thu Jan 13 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.0.1-2
+- Update ABI string
+
 * Thu Jan 13 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.0.1-1
 - New upstream release. A maintenance and stability release
 
