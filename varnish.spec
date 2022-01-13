@@ -23,7 +23,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 7.0.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
