@@ -22,8 +22,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 7.0.0
-Release: 2%{?dist}
+Version: 7.0.1
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -300,6 +300,9 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Thu Jan 13 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.0.1-1
+- New upstream release. A maintenance and stability release
+
 * Tue Nov 02 2021 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.0.0-2
 - upstream switched to pcre2 a while ago
 
