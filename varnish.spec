@@ -16,26 +16,17 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.5
-Release: 1%{?v_rc}%{?dist}
+Release: 2%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
 Source0: http://repo.varnish-cache.org/source/%{name}-%{version}.tar.gz
-#Source0: %{name}-%{version}%{?vd_rc}.tar.gz
-#Source0: %{name}-trunk.tar.gz
-#Source0: http://repo.varnish-cache.org/snapshots/%{name}-%{version}%{?vd_rc}.tar.gz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 Patch1:  varnish-4.0.2.fix_ld_library_path_in_sphinx_build.patch
-Patch2:  varnish-4.0.4_fix_Werror_el6.patch
-Patch3:  varnish-4.0.3_fix_python24.el5.patch
-Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
 Patch5:  varnish-4.0.4_fix_systemd_el7.patch
-Patch6:  varnish-4.0.4_missing_varnishlog_initrc.patch
+Patch7:  varnish-4.0.5-CVE-2022-23959.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: ncurses-devel groff pcre-devel pkgconfig python-docutils libedit-devel jemalloc-devel
-%if 0%{?rhel} == 6
-BuildRequires: selinux-policy
-%endif
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
 Requires: logrotate
 Requires: ncurses
@@ -46,24 +37,12 @@ Requires(pre): shadow-utils
 Requires(post): /sbin/chkconfig, /usr/bin/uuidgen
 Requires(preun): /sbin/chkconfig
 Requires(preun): /sbin/service
-#Provides: varnishabi-4.0.0-2acedeb
-%if %{undefined suse_version}
 Requires(preun): initscripts
-%endif
-%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 Requires(post): systemd-units
 Requires(post): systemd-sysv
 Requires(preun): systemd-units
 Requires(postun): systemd-units
 BuildRequires: systemd-units
-%endif
-%if 0%{?rhel} == 6
-Requires: %{name}-selinux
-Requires(post): policycoreutils, 
-Requires(preun): policycoreutils
-Requires(postun): policycoreutils
-%endif
-
 # Varnish actually needs gcc installed to work. It uses the C compiler 
 # at runtime to compile the VCL configuration files. This is by design.
 Requires: gcc
@@ -99,15 +78,6 @@ Group: Documentation
 %description docs
 Documentation files for %name
 
-%if 0%{?rhel} == 6
-%package selinux
-Summary: Minimal selinux policy for running varnish4
-Group:   System Environment/Daemons
-
-%description selinux
-Minimal selinux policy for running varnish4
-%endif
-
 %prep
 %setup -q -n varnish-%{version}%{?vd_rc}
 tar xzf %SOURCE1
@@ -115,28 +85,14 @@ ln -s pkg-varnish-cache-%{commit1}/redhat redhat
 ln -s pkg-varnish-cache-%{commit1}/debian debian
 
 %patch1 -p0
-%if 0%{?rhel} <= 6 && 0%{?fedora} <= 12
-%patch2 -p0
-%endif
-%if 0%{?rhel} <= 5 && 0%{?fedora} <= 12
-%patch3 -p0
-%endif
-%if 0%{?rhel} == 6
-%patch4 -p0
-%endif
-%if 0%{?rhel} == 7 || 0%{?fedora} >= 17
 %patch5 -p0
-%endif
-%patch6 -p0
+%patch7 -p0
 
 %build
 #export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=0"
 
 # Remove "--disable static" if you want to build static libraries 
 %configure --disable-static \
-%if 0%{?rhel} <= 5 && 0%{?fedora} <= 12
-  --with-rst2man=/bin/true  \
-%endif
   --localstatedir=/var/lib  \
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -195,15 +151,9 @@ install -D -m 0755 redhat/varnishlog.initrc %{buildroot}%{_initrddir}/varnishlog
 install -D -m 0755 redhat/varnishncsa.initrc %{buildroot}%{_initrddir}/varnishncsa
 %endif
 install -D -m 0755 redhat/varnish_reload_vcl %{buildroot}%{_sbindir}/varnish_reload_vcl
+install -D -m 0755 redhat/varnish_pre %{buildroot}%{_sbindir}/varnish_pre
 
 echo %{_libdir}/varnish > %{buildroot}%{_sysconfdir}/ld.so.conf.d/varnish-%{_arch}.conf
-
-# selinux module for el6
-%if 0%{?rhel} == 6
-cd selinux
-make -f %{_datadir}/selinux/devel/Makefile
-install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name}/varnish4.pp
-%endif
 
 %clean
 rm -rf %{buildroot}
@@ -219,6 +169,7 @@ rm -rf %{buildroot}
 %{_mandir}/man7/*.7*
 %doc LICENSE README doc/changes.rst
 %doc etc/builtin.vcl etc/example.vcl
+%doc redhat/vsv8_epel7_varnish405.vcl
 %dir %{_sysconfdir}/varnish/
 %config(noreplace) %{_sysconfdir}/varnish/default.vcl
 %config(noreplace) %{_sysconfdir}/logrotate.d/varnish
@@ -262,12 +213,6 @@ rm -rf %{buildroot}
 %doc doc/sphinx
 %doc doc/html
 %doc doc/changes*.html
-
-%if 0%{?rhel} == 6
-%files selinux
-%defattr(-,root,root,-)
-%{_datadir}/selinux/packages/%{name}/varnish4.pp
-%endif
 
 %pre
 getent group varnish >/dev/null || groupadd -r varnish
@@ -317,25 +262,6 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 /sbin/chkconfig --del varnish >/dev/null 2>&1 || :
 #/bin/systemctl try-restart varnish.service >/dev/null 2>&1 || :
 
-# selinux module for el6
-%if 0%{?rhel} == 6
-%post selinux
-if [ "$1" -le "1" ] ; then # First install
-semodule -i %{_datadir}/selinux/packages/%{name}/varnish4.pp 2>/dev/null || :
-fi
-
-%preun selinux
-if [ "$1" -lt "1" ] ; then # Final removal
-semodule -r varnish4 2>/dev/null || :
-fi
-
-%postun selinux
-if [ "$1" -ge "1" ] ; then # Upgrade
-semodule -i %{_datadir}/selinux/packages/%{name}/varnish4.pp 2>/dev/null || :
-fi
-
-%endif
-
 %preun
 
 %if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
@@ -367,6 +293,13 @@ fi
 %endif
 
 %changelog
+* Wed Feb 16 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.5-2
+- Added mitigation instructions for VSV00008 aka CVE-2022-23959
+  SECURITY, PLEASE NOTE: varnish-4.0.5 is marked END OF LIFE from the
+  Varnish Cache upstream project. Please consider upgrading to varnish-6.0 LTS
+  See /usr/share/doc/varnish-4.0.5/vsv8_epel7_varnish405.vcl for details.
+- Dropped el6 support
+
 * Wed Aug 02 2017 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.5-1
 - New upstream release. Includes patches for security issue VSV00001
   closes bz #1476784, #1477699
