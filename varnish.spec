@@ -23,7 +23,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 7.0.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -134,13 +134,12 @@ Summary: Development files for %{name}
 Provides: varnish-libs-devel%{?isa} = %{version}-%{release}
 Provides: varnish-libs-devel = %{version}-%{release}
 Obsoletes: varnish-libs-devel < %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
+Requires: python3
 
 %description devel
 Development files for %{name}
 Varnish Cache is a high-performance HTTP accelerator
-Requires: %{name} = %{version}-%{release}
-
-Requires: python3
 
 %package docs
 Summary: Documentation files for %name
@@ -300,6 +299,9 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Mon Feb 21 2022 Luboš Uhliarik <luhliari@redhat.com> - 7.0.2-2
+- Fix Provides directive for varnish-devel package
+
 * Wed Jan 26 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.0.2-1
 - New upstream release. A security release
 - Includes fix for CVE-2022-23959 aka VSV00008, rhbz#2045033
