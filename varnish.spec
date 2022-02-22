@@ -16,7 +16,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 4.0.5
-Release: 2%{?v_rc}%{?dist}
+Release: 3%{?v_rc}%{?dist}
 License: BSD
 Group: System Environment/Daemons
 URL: http://www.varnish-cache.org/
@@ -293,6 +293,10 @@ fi
 %endif
 
 %changelog
+* Tue Feb 22 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.5-3
+- Added a sleep 0.5 to ExecStartPost, working around a race in
+  systemd, fixing bz#1478278
+
 * Wed Feb 16 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> 4.0.5-2
 - Added mitigation instructions for VSV00008 aka CVE-2022-23959
   SECURITY, PLEASE NOTE: varnish-4.0.5 is marked END OF LIFE from the
