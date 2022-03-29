@@ -12,18 +12,18 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 9b5f68e19ca0ab60010641e305fd12822f18d42c
-%global vrt 14.0
+%global abi c2c07517ddddbc187604b800eff733296e93aaad
+%global vrt 15.0
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%global commit1 d3e6a3fad7d4c2ac781ada92dcc246e7eef9d129
+%global commit1 3ba24a8eee8cc5c082714034145b907402bbdb83
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 7.0.2
-Release: 2%{?dist}
+Version: 7.1.0
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -70,13 +70,14 @@ Provides: varnishd(abi)%{_isa} = %{abi}
 Provides: varnishd(vrt)%{_isa} = %{vrt}
 
 Provides: vmod(blob)%{_isa} = %{version}-%{release}
+Provides: vmod(cookie)%{_isa} = %{version}-%{release}
+Provides: vmod(debug)%{_isa} = %{version}-%{release}
 Provides: vmod(directors)%{_isa} = %{version}-%{release}
 Provides: vmod(proxy)%{_isa} = %{version}-%{release}
 Provides: vmod(purge)%{_isa} = %{version}-%{release}
 Provides: vmod(std)%{_isa} = %{version}-%{release}
 Provides: vmod(unix)%{_isa} = %{version}-%{release}
 Provides: vmod(vtc)%{_isa} = %{version}-%{release}
-Provides: vmod_purge.so%{_isa} = %{version}-%{release}
 %endif
 
 
@@ -299,6 +300,10 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Tue Mar 29 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.1.0-1
+- New upstream release
+- Includes updated snapshot of pkg-varnish
+
 * Mon Feb 21 2022 Luboš Uhliarik <luhliari@redhat.com> - 7.0.2-2
 - Fix Provides directive for varnish-devel package
 
