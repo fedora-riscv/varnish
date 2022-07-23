@@ -23,7 +23,7 @@
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 7.1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -300,6 +300,9 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Sat Jul 23 2022 Fedora Release Engineering <releng@fedoraproject.org> - 7.1.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
 * Tue Mar 29 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.1.0-1
 - New upstream release
 - Includes updated snapshot of pkg-varnish
