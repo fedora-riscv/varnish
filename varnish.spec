@@ -12,7 +12,7 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi c2c07517ddddbc187604b800eff733296e93aaad
+%global abi 7cee1c581bead20e88d101ab3d72afb29f14d87a
 %global vrt 15.0
 
 # Package scripts are now external
@@ -22,8 +22,8 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 7.1.0
-Release: 2%{?dist}
+Version: 7.1.1
+Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
@@ -300,6 +300,10 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Fri Aug 12 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.7.1-1
+- New upstream release. A security release
+- Includes fix for VSV00009 aka CVE-2022-38150
+
 * Sat Jul 23 2022 Fedora Release Engineering <releng@fedoraproject.org> - 7.1.0-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
 
