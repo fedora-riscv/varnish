@@ -12,59 +12,24 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 7cee1c581bead20e88d101ab3d72afb29f14d87a
-%global vrt 15.0
+%global abi 75d4c1de9673da2ae3df3904fae960d8ae534a00
+%global vrt 16.0
 
 # Package scripts are now external
 # https://github.com/varnishcache/pkg-varnish-cache
-%global commit1 3ba24a8eee8cc5c082714034145b907402bbdb83
+%global commit1 ffc59a345217b599fd49f7f0442b5f653fbe6fc2
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 7.1.1
+Version: 7.2.0
 Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 
-# Patches:
-# Patch  001: Because of Fedora's libtool no-rpath requirement, it is still
-#             necessary to add LD_LIBRARY_PATH when building the documentation
-#             (Fixed by using LT_SYS_LIBRARY_PATH)
-#Patch1:  varnish-6.1.1_fix_ld_library_path_in_doc_build.patch
-
-# Patch  004: varnish selinux support for el6
-#Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
-
-# Patch  009: Hard code older python support in configure for older el releases
-#Patch9:  varnish-5.1.1.fix_python_version.patch
-
-# Patch  012: Fix test for variants of ncurses, based on upstream commit 9bdc5f75, upstream issue #2668
-#Patch12: varnish-6.0.1_fix_bug2668.patch
-
-# Patch  013: Just a simple format error
-#Patch13: varnish-6.1.0_fix_testu00008.patch
-
-# Patch  014: Another formatting error fixed upstream, issue 2879
-#Patch14: varnish-6.1.1_fix_upstrbug_2879.patch
-
-# Patch  015: pcre-jit fixed upstream, issue #2912
-#Patch15: varnish-6.1.1_fix_issue_2912.patch
-
-# Patch  016: Fix some warnings that prohibited clean -Werror compilation
-#             on el6. Will not be fixed upstream. Patch grows more stupid
-#             for each iteration :-(
-#Patch16: varnish-6.5.0_el6_fix_warning_from_old_gcc.patch
-
-# Patch  017: Fix stack size on ppc64 in test c_00057, upstream commit 88948d9
-#Patch17: varnish-6.2.0_fix_ppc64_for_test_c00057.patch
-
-# Patch 018: gcc-10.0.1/s390x compilation fix, upstream commit b0af060
-#Patch18: varnish-6.3.2_fix_s390x.patch
-
-%if 0%{?fedora} > 29
+%if 0%{?fedora} > 29 || 0%{?rhel} > 7
 Provides: varnish%{_isa} = %{version}-%{release}
 Provides: varnishd(abi)%{_isa} = %{abi}
 Provides: varnishd(vrt)%{_isa} = %{vrt}
@@ -86,13 +51,13 @@ BuildRequires: python34 python34-sphinx python34-docutils
 %else
 BuildRequires: python3, python3-sphinx, python3-docutils
 %endif
+BuildRequires: gcc
 BuildRequires: jemalloc-devel
 BuildRequires: libedit-devel
+BuildRequires: make
 BuildRequires: ncurses-devel
 BuildRequires: pcre2-devel
 BuildRequires: pkgconfig
-BuildRequires: gcc
-BuildRequires: make
 
 # Extra requirements for the build suite
 BuildRequires: nghttp2
@@ -182,6 +147,7 @@ export PYTHON=%{__python}
 %configure LT_SYS_LIBRARY_PATH=%_libdir \
  --disable-static \
   --localstatedir=/var/lib  \
+  --with-contrib \
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}} \
 #  --disable-pcre-jit \
 
@@ -244,7 +210,7 @@ chmod 644 lib/libvmod_*/*.h
 %{_sbindir}/*
 %{_bindir}/*
 %{_libdir}/*.so.*
-%{_libdir}/varnish
+%{_libdir}/%{name}
 %{_var}/lib/varnish
 %attr(0700,varnish,varnish) %dir %{_var}/log/varnish
 %{_mandir}/man1/*.1*
@@ -300,7 +266,13 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
-* Fri Aug 12 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.7.1-1
+* Fri Sep 16 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.2.0-1
+- New upstream release. The regular bi-annual "fresh" release
+- Removed list of patches from comments
+- Cosmetical changes to specfile from upstream
+- Now build with --with-contrib
+
+* Fri Aug 12 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.1.1-1
 - New upstream release. A security release
 - Includes fix for VSV00009 aka CVE-2022-38150
 
