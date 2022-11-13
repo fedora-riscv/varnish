@@ -22,7 +22,7 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 7.1.1
+Version: 7.1.2
 Release: 1%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
@@ -300,7 +300,11 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
-* Fri Aug 12 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.7.1-1
+* Sun Nov 13 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.1.2-1
+- New upstream release. A security release
+- Includes fixes for VSV00010 and VSV00011
+
+* Fri Aug 12 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 7.1.1-1
 - New upstream release. A security release
 - Includes fix for VSV00009 aka CVE-2022-38150
 
