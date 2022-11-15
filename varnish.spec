@@ -27,7 +27,7 @@
 
 Summary: High-performance HTTP accelerator
 Name: varnish
-Version: 6.0.10
+Version: 6.0.11
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -416,6 +416,10 @@ fi
 
 
 %changelog
+* Tue Nov 15 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.11-1
+- New upstream release. A security release
+- Includes fix for CVE-2022-45060 aka VSV00011, rhbz#2141847
+
 * Fri Jan 28 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.10-1
 - New upstream release. A security release
 - Includes fix for CVE-2022-23959 aka VSV00008, rhbz#2045032
