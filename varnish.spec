@@ -3,7 +3,7 @@
 # https://github.com/varnishcache/varnish-cache/issues/2269
 %global debug_package %{nil}
 
-%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+%if 0%{?rhel} == 7
 %global _use_internal_dependency_generator 0
 %global __find_provides %{_builddir}/%{name}-%{version}/find-provides %__find_provides
 %global __python /usr/bin/python3.4
@@ -14,6 +14,10 @@
 %global __python /usr/bin/python3
 %endif
 %endif
+
+# Default is to build with jemalloc (preferred by upstream, default on fedora)
+# Add "--with system_allocator" if you insist on using the default malloc (glibc on rhel) instead
+%bcond_with system_allocator 
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
@@ -35,9 +39,6 @@ URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}%{?vd_rc}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 Patch1:  varnish-6.0.2.fix_ld_library_path_in_doc_build.patch
-Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
-Patch9:  varnish-5.1.1.fix_python_version.patch
-# Patch 018: gcc-10.0.1/s390x compilation fix, upstream commit b0af060
 Patch18: varnish-6.3.2_fix_s390x.patch
 Patch21: varnish-6.0.7.fix_tests_v00064.patch
 
@@ -57,12 +58,16 @@ Provides: vmod(vtc)%{_isa} = %{version}-%{release}
 
 Obsoletes: varnish-libs < %{version}-%{release}
 
-%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+%if 0%{?rhel} == 7
 BuildRequires: python-sphinx python34-docutils
 %else
 BuildRequires: python3-sphinx, python3-docutils
 %endif
+%if %{with system_allocator}
+# use glibc
+%else
 BuildRequires: jemalloc-devel
+%endif
 BuildRequires: libedit-devel
 BuildRequires: ncurses-devel
 BuildRequires: pcre-devel
@@ -71,13 +76,14 @@ BuildRequires: gcc
 BuildRequires: make
 BuildRequires: nghttp2
 
-%if 0%{?rhel} == 6
-BuildRequires: selinux-policy
-%endif
 Requires: logrotate
 Requires: ncurses
 Requires: pcre
+%if %{with system_allocator}
+# use glibc
+%else
 Requires: jemalloc
+%endif
 Requires: redhat-rpm-config
 Requires(pre): shadow-utils
 Requires(post): /usr/bin/uuidgen
@@ -90,15 +96,6 @@ Requires(post): systemd-sysv
 Requires(preun): systemd-units
 Requires(postun): systemd-units
 BuildRequires: systemd-units
-%endif
-%if 0%{?rhel} == 6
-Requires: %{name}-selinux
-Requires(post): policycoreutils, 
-Requires(preun): policycoreutils
-Requires(postun): policycoreutils
-Requires(post): /sbin/chkconfig
-Requires(preun): /sbin/chkconfig
-Requires(preun): /sbin/service
 %endif
 
 %description
@@ -123,12 +120,7 @@ Obsoletes: varnish-libs-devel < %{version}-%{release}
 Development files for %{name}
 Varnish Cache is a high-performance HTTP accelerator
 Requires: %{name} = %{version}-%{release}
-
-%if 0%{?rhel} == 6
-Requires: python34
-%else
 Requires: python3
-%endif
 
 %package docs
 Summary: Documentation files for %name
@@ -137,47 +129,22 @@ Group: Documentation
 %description docs
 Documentation files for %name
 
-%if 0%{?rhel} == 6
-%package selinux
-Summary: Minimal selinux policy for running varnish
-Group:   System Environment/Daemons
-
-%description selinux
-Minimal selinux policy for running varnish4
-%endif
-
 %prep
 %setup -q -n varnish-%{version}%{?vd_rc}
 tar xzf %SOURCE1
 ln -s pkg-varnish-cache-%{commit1}/redhat redhat
 ln -s pkg-varnish-cache-%{commit1}/debian debian
 cp redhat/find-provides .
-%if 0%{?rhel} == 6
-cp pkg-varnish-cache-%{commit1}/sysv/redhat/* redhat/
-sed -i '8 i\RPM_BUILD_ROOT=%{buildroot}' find-provides
-%endif
 
 %patch1 -p0
-%if 0%{?rhel} == 6
-%patch4 -p0
-%patch9 -p0
-%endif
 %patch18 -p1
 %patch21 -p1
 
 %build
-%if 0%{?rhel} == 6
-export CFLAGS="%{optflags} -fPIC"
-export LDFLAGS=" -pie"
-%endif
-
 # https://gcc.gnu.org/wiki/FAQ#PR323
 %ifarch %ix86
 %if 0%{?fedora} > 21
 export CFLAGS="%{optflags} -ffloat-store -fexcess-precision=standard"
-%endif
-%if 0%{?rhel} >= 6
-export CFLAGS="%{optflags} -fno-exceptions -fPIC -ffloat-store"
 %endif
 %endif
 
@@ -191,10 +158,14 @@ export PYTHON=%{__python}
   --with-jemalloc=no \
 %endif
   --localstatedir=/var/lib  \
-  --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
+  --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}} \
+%if %{with system_allocator}
+  --with-jemalloc=no \
+%endif
 #ifarch x86_64 #arm
 #  --disable-pcre-jit \
 #endif
+
 
 # We have to remove rpath - not allowed in Fedora
 # (This problem only visible on 64 bit arches)
@@ -207,16 +178,8 @@ pushd lib/libvarnishapi/.libs
 ln -s libvarnishapi.so libvarnishapi.so.1
 popd
 
-%if 0%{?rhel} == 6 
-# Upstream github issue #22650
-sed -i 's/-Werror$//g;' bin/varnishd/Makefile
-sed -i 's/-Werror$//g;' lib/libvarnishapi/Makefile
-# Workaround old readline/curses, ref upstream github issue #2550
-sed -i 's/vcl1/ vcl1/;' bin/varnishtest/tests/u00011.vtc
-%endif
-
-# el6 and el7 defaults to LANG=C, which makes python3 fail on utf8
-%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+# el7 defaults to LANG=C, which makes python3 fail on utf8
+%if 0%{?rhel} == 7
 export LANG=en_US.UTF-8
 %endif
 
@@ -247,8 +210,8 @@ make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%
 %install
 rm -rf %{buildroot}
 
-# el6 and el7 defaults to LANG=C, which makes python3 fail on utf8
-%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+# el7 defaults to LANG=C, which makes python3 fail on utf8
+%if 0%{?rhel} == 7
 export LANG=en_US.UTF-8
 %endif
 
@@ -266,13 +229,13 @@ install -D -m 0644 redhat/varnish.logrotate %{buildroot}%{_sysconfdir}/logrotate
 install -D -m 0644 include/vcs_version.h %{buildroot}%{_includedir}/varnish
 install -D -m 0644 include/vrt.h %{buildroot}%{_includedir}/varnish
 
-# systemd support
+# systemd
 %if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
 mkdir -p %{buildroot}%{_unitdir}
 install -D -m 0644 redhat/varnish.service %{buildroot}%{_unitdir}/varnish.service
 install -D -m 0644 redhat/varnishncsa.service %{buildroot}%{_unitdir}/varnishncsa.service
 
-# default is standard sysvinit
+# sysvinit
 %else
 install -D -m 0644 redhat/varnish.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/varnish
 install -D -m 0755 redhat/varnish.initrc %{buildroot}%{_initrddir}/varnish
@@ -285,13 +248,6 @@ echo %{_libdir}/varnish > %{buildroot}%{_sysconfdir}/ld.so.conf.d/varnish-%{_arc
 # No idea why these ends up with mode 600 in the debug package
 chmod 644 lib/libvmod_*/*.c
 chmod 644 lib/libvmod_*/*.h
-
-# selinux module for el6
-%if 0%{?rhel} == 6
-cd selinux
-make -f %{_datadir}/selinux/devel/Makefile
-install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name}/varnish4.pp
-%endif
 
 %files
 %{_sbindir}/*
@@ -338,11 +294,6 @@ install -p -m 644 -D varnish4.pp %{buildroot}%{_datadir}/selinux/packages/%{name
 %doc doc/html
 %doc doc/changes*.html
 
-%if 0%{?rhel} == 6
-%files selinux
-%{_datadir}/selinux/packages/%{name}/varnish4.pp
-%endif
-
 %pre
 getent group varnish >/dev/null || groupadd -r varnish
 getent passwd varnish >/dev/null || \
@@ -367,18 +318,6 @@ chown varnish:varnish /var/log/varnish/varnishncsa.log 2>/dev/null || true
 
 test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc/varnish/secret)
 
-# selinux module for el6
-%if 0%{?rhel} == 6
-%post selinux
-if [ "$1" -le "1" ] ; then # First install
-semodule -i %{_datadir}/selinux/packages/%{name}/varnish4.pp 2>/dev/null || :
-fi
-
-%preun selinux
-if [ "$1" -lt "1" ] ; then # Final removal
-semodule -r varnish4 2>/dev/null || :
-fi
-
 %postun
 %if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
 %systemd_postun_with_restart varnish.service
@@ -386,15 +325,7 @@ fi
 /sbin/ldconfig
 
 
-%postun selinux
-if [ "$1" -ge "1" ] ; then # Upgrade
-semodule -i %{_datadir}/selinux/packages/%{name}/varnish4.pp 2>/dev/null || :
-fi
-
-%endif
-
 %preun
-
 %if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
 %systemd_preun varnish.service
 %else
@@ -419,6 +350,8 @@ fi
 * Tue Nov 15 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.11-1
 - New upstream release. A security release
 - Includes fix for CVE-2022-45060 aka VSV00011, rhbz#2141847
+- Pulled support for el6
+- Added bcond for system allocator
 
 * Fri Jan 28 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.0.10-1
 - New upstream release. A security release
