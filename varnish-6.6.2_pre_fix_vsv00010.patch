@@ -1,0 +1,11 @@
+--- bin/varnishd/cache/cache_http.c.orig	2022-11-16 23:56:03.248251530 +0100
++++ bin/varnishd/cache/cache_http.c	2022-11-16 23:56:09.545208475 +0100
+@@ -900,8 +900,6 @@
+ {
+ 	if (fm->hdf[u] & HDF_FILTER)
+ 		return (1);
+-	if (u < HTTP_HDR_FIRST)
+-		return (0);
+ #define HTTPH(a, b, c) \
+ 	if (((c) & how) && http_IsHdr(&fm->hd[u], (b))) \
+ 		return (1);

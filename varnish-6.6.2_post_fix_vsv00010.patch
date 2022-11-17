@@ -1,0 +1,11 @@
+--- bin/varnishd/cache/cache_http.c.orig	2022-11-17 00:07:20.275622335 +0100
++++ bin/varnishd/cache/cache_http.c	2022-11-17 00:08:30.429142656 +0100
+@@ -1063,6 +1063,8 @@
+ 
+ 	if (fm->hdf[u] & HDF_FILTER)
+ 		return (1);
++	if (u < HTTP_HDR_FIRST)
++		return (0);
+ 	e = strchr(fm->hd[u].b, ':');
+ 	if (e == NULL)
+ 		return (0);

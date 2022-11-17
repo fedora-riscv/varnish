@@ -20,49 +20,30 @@
 %global commit1 ec7ad9e6c6dd7c9b4f4ba60c5b223376908c3ca6
 %global shortcommit1 %(c=%{commit1}; echo ${c:0:7})
 
+# Default: Use jemalloc, as adviced by upstream project
+# Change to 1 to use system allocator (ie. glibc)
+%bcond system_allocator 0
+
 Summary: High-performance HTTP accelerator
 Name: varnish
 Version: 6.6.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: BSD
 URL: https://www.varnish-cache.org/
 Source0: http://varnish-cache.org/_downloads/%{name}-%{version}.tgz
 Source1: https://github.com/varnishcache/pkg-varnish-cache/archive/%{commit1}.tar.gz#/pkg-varnish-cache-%{shortcommit1}.tar.gz
 
-# Patches:
-# Patch  001: Because of Fedora's libtool no-rpath requirement, it is still
-#             necessary to add LD_LIBRARY_PATH when building the documentation
-#             (Fixed by using LT_SYS_LIBRARY_PATH)
-#Patch1:  varnish-6.1.1_fix_ld_library_path_in_doc_build.patch
-
-# Patch  004: varnish selinux support for el6
-#Patch4:  varnish-4.0.3_fix_varnish4_selinux.el6.patch
-
-# Patch  009: Hard code older python support in configure for older el releases
-#Patch9:  varnish-5.1.1.fix_python_version.patch
-
-# Patch  012: Fix test for variants of ncurses, based on upstream commit 9bdc5f75, upstream issue #2668
-#Patch12: varnish-6.0.1_fix_bug2668.patch
-
-# Patch  013: Just a simple format error
-#Patch13: varnish-6.1.0_fix_testu00008.patch
-
-# Patch  014: Another formatting error fixed upstream, issue 2879
-#Patch14: varnish-6.1.1_fix_upstrbug_2879.patch
-
-# Patch  015: pcre-jit fixed upstream, issue #2912
-#Patch15: varnish-6.1.1_fix_issue_2912.patch
-
-# Patch  016: Fix some warnings that prohibited clean -Werror compilation
-#             on el6. Will not be fixed upstream. Patch grows more stupid
-#             for each iteration :-(
-#Patch16: varnish-6.5.0_el6_fix_warning_from_old_gcc.patch
-
-# Patch  017: Fix stack size on ppc64 in test c_00057, upstream commit 88948d9
-#Patch17: varnish-6.2.0_fix_ppc64_for_test_c00057.patch
-
-# Patch 018: gcc-10.0.1/s390x compilation fix, upstream commit b0af060
-#Patch18: varnish-6.3.2_fix_s390x.patch
+# Patch19 based on upstream commit 782f42f
+Patch19: varnish-6.6.2_vsv00009.patch
+# Patch20 Based on upstream commit 515a93d
+Patch20: varnish-6.6.2_vsv00011.patch
+Patch21: varnish-6.6.2_pre_fix_vsv00010.patch
+# Patch22 is upstream commit f4dffe5
+Patch22: varnish-6.6.2_perfect_cache_headers.patch
+# Patch23 is upstream commit fcf5722a
+Patch23: varnish-6.6.2_vsv00010_fcf5722a.patch
+Patch24: varnish-6.6.2_post_fix_vsv00010.patch
+Patch25: varnish-6.6.2_vsv00011_test.patch
 
 %if 0%{?fedora} > 29
 Provides: varnish%{_isa} = %{version}-%{release}
@@ -85,7 +66,11 @@ BuildRequires: python34 python34-sphinx python34-docutils
 %else
 BuildRequires: python3, python3-sphinx, python3-docutils
 %endif
+%if 0%{with system_allocator}
+# use glibc
+%else
 BuildRequires: jemalloc-devel
+%endif
 BuildRequires: libedit-devel
 BuildRequires: ncurses-devel
 BuildRequires: pcre-devel
@@ -104,7 +89,11 @@ BuildRequires: haproxy
 Requires: logrotate
 Requires: ncurses
 Requires: pcre
+%if 0%{with system_allocator}
+# use glibc
+%else
 Requires: jemalloc
+%endif
 Requires: redhat-rpm-config
 Requires(pre): shadow-utils
 Requires(post): /usr/bin/uuidgen
@@ -155,6 +144,13 @@ ln -s pkg-varnish-cache-%{commit1}/redhat redhat
 ln -s pkg-varnish-cache-%{commit1}/debian debian
 cp redhat/find-provides .
 sed -i 's,rst2man-3.6,rst2man-3.4,g; s,rst2html-3.6,rst2html-3.4,g; s,phinx-build-3.6,phinx-build-3.4,g' configure
+%patch19 -p1
+%patch20 -p1
+%patch21 -p0
+%patch22 -p1
+%patch23 -p1 -F1
+%patch24 -p0
+%patch25 -p1
 
 %build
 # https://gcc.gnu.org/wiki/FAQ#PR323
@@ -183,6 +179,9 @@ export PYTHON=%{__python}
  --disable-static \
   --localstatedir=/var/lib  \
   --docdir=%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}} \
+%if 0%{with system_allocator}
+  --with-jemalloc=no \
+%endif
 #  --disable-pcre-jit \
 
 %make_build
@@ -298,6 +297,13 @@ test -f /etc/varnish/secret || (uuidgen > /etc/varnish/secret && chmod 0600 /etc
 
 
 %changelog
+* Mon Nov 14 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.6.2-3
+- Added patches for VSV00009 aka CVE-2022-38150, bz#2118570
+- Added patches for VSV00010 aka CVE-2022-45059, bz#2141842
+- Added patches for VSV00011 aka CVE-2022-45060, bz#2141847
+- Added a bcond system_allocator, bz#1917697
+- Removed comments referencing patches no longer in use
+
 * Mon Feb 07 2022 Ingvar Hagelund <ingvar@redpill-linpro.com> - 6.6.2-2
 - Rebuild with side-tag to co-build varnish-modules
 
