@@ -21,7 +21,7 @@
 
 %global __provides_exclude_from ^%{_libdir}/varnish/vmods
 
-%global abi 9a7da4ff4c0c824af33e230740a11e99fdca23d9
+%global abi a3bc025c2df28e4a76e10c2c41217c9864e9963b
 %global vrt 7.1
 
 # Package scripts are now external
