@@ -205,7 +205,8 @@ sed -i 's/-vcl {$/\\/g; 4 a -arg "-p thread_pool_stack=64k" -vcl {' bin/varnisht
 sed -i 's/client, -12/client, -11/g;' bin/varnishtest/tests/v00058.vtc
 rm bin/varnishtest/tests/r03308.*
 %endif
-make %{?_smp_mflags} check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
+#make check LD_LIBRARY_PATH="%{buildroot}%{_libdir}:%{buildroot}%{_libdir}/%{name}" VERBOSE=1
+make check 
 
 %install
 rm -rf %{buildroot}
